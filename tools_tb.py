@@ -21,44 +21,47 @@ class modem_serial:
     def __init__(self, serial_port):
         self.serial_port = serial_port
 
-    def send_serial_cmd(self, message):
+    def send_serial_cmd(self, message, at_mode=False):
         self.serial_port.flushInput()
         self.serial_port.flushOutput()
-        self.serial_port.write(message)
+        if at_mode == False:
+            self.serial_port.write(b'\r\n')
+            self.serial_port.write(message)
+            self.serial_port.write(b'\r\n')
+        else:
+            self.serial_port.write(message) # for at command mode
         
     def read_serial_cmd(self):
         message = self.serial_port.readall()
         return message
 
-    def readline_serial_cmd(self):
-        message = self.serial_port.readline()
-        return message
-
     def init_modem(self):
-        self.send_serial_cmd(b'ATZ\r\n')
-        self.serial_port.flushInput()
-        self.serial_port.flushOutput()
+        self.send_serial_cmd(b'ATZ')
+        sleep(1)
+        self.send_serial_cmd(b'ATZ')
         sleep(2)
-        self.send_serial_cmd(b'+++')
+        self.send_serial_cmd(b'+++', True)
         sleep(2)
         connected_message = self.read_serial_cmd()
-        if connected_message.strip() == b'OK' or b'+++':
+        print(connected_message)
+        print(b'OK' in connected_message)
+        if b'OK' in connected_message:
             return True
         else:
             return False
     
     def set_register(self,register, set_value):
-        self.send_serial_cmd((bytes('ATS{}={}\r\n'.format(register, set_value), 'ascii')))
-        print((bytes('ATS{}={}\r\n'.format(register, set_value), 'ascii')))
+        self.send_serial_cmd((bytes('ATS{}={}'.format(register, set_value), 'ascii')))
+        print((bytes('ATS{}={}'.format(register, set_value), 'ascii')))
 
-    def write_register_reset(self,):
-        self.send_serial_cmd(b'AT&W\r\n')
-        self.send_serial_cmd(b'ATZ\r\n')
+    def write_register_reset(self):
+        self.send_serial_cmd(b'AT&W')
+        self.send_serial_cmd(b'ATZ')
 
     def factory_reset(self):
-        self.send_serial_cmd(b'AT&F\r\n')
-        self.send_serial_cmd(b'AT&W\r\n')
-        self.send_serial_cmd(b'ATZ\r\n')
+        self.send_serial_cmd(b'AT&F')
+        self.send_serial_cmd(b'AT&W')
+        self.send_serial_cmd(b'ATZ')
 
 
 
@@ -119,18 +122,23 @@ def disconect_reconnect_radios(current_baud, config_path, config_id='serial_conf
     baud_rates = read_and_setup_config(config_id, config_path).get('data_val')
     for element in comlist:
         connected.append(element.device)
+    print(connected)
     for i in range(len(connected)):
         try:
+            print('attempting to attach radio at 57600')
             serial_port_tmp = serial.Serial(connected[i],baudrate=current_baud, \
                 parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE, \
                 timeout=0.05,rtscts=True) 
             radio = modem_serial(serial_port_tmp)
             serial_port_tmp.baudrate = 57600
+            print('check that radio can be talked to at 57600')
             if radio.init_modem() == True:
                 serial_port_list.append(serial_port_tmp)
             else:
                 for j in range(len(baud_rates)):
+                    print('attempting to attach radio at {}'.format(baud_rates[j]))
                     serial_port_tmp.baudrate = baud_rates[j]
+                    print('check that radio can be talked to at {}'.format(baud_rates[j]))
                     if radio.init_modem() == True:
                         serial_port_list.append(serial_port_tmp)
                         break
@@ -138,6 +146,7 @@ def disconect_reconnect_radios(current_baud, config_path, config_id='serial_conf
             print('{} is already in use'.format(connected[i]))
     if len(serial_port_list) < 1:
         raise NotEnoughRadioError('Please connect radio(s), or try power cycling radio(s)')
+    print(serial_port_list)
     return serial_port_list
 
 
@@ -149,6 +158,7 @@ def factory_reset_all_radios(serial_port_list):
     else:
         for i in range(len(serial_port_list)):
             radio = modem_serial(serial_port_list[i])
+            radio.init_modem()
             radio.factory_reset()
         close_all_serial(serial_port_list)
         new_serial_port_list = disconect_reconnect_radios(57600, CONFIG_PATH)
@@ -161,10 +171,11 @@ def main():
     serial_port_list = disconect_reconnect_radios(57600, CONFIG_PATH)
     serial_port_list = factory_reset_all_radios(serial_port_list)
     #-------TEST--------
-    serial_port_list = br_test.TC1_R9_UART_2(serial_port_list)
-    serial_port_list = ar_test.TC2_R9_AIRSPEED_1(serial_port_list)
+    #serial_port_list = br_test.TC1_R9_UART_2(serial_port_list)
+    #serial_port_list = ar_test.TC2_R9_AIRSPEED_1(serial_port_list)
+
     close_all_serial(serial_port_list)
-    create_table_export_csv(test_id_list)
+    #create_table_export_csv(test_id_list)
 
     
     
