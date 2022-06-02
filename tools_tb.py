@@ -14,7 +14,7 @@ CONFIG_PATH = 'config.ini'
 class NotEnoughRadioError(Exception):
     pass
 
-teswt
+
 
 # come back to this
 class modem_serial:
