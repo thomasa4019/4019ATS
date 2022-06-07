@@ -144,11 +144,11 @@ class modem_serial:
         if at_mode == False:
             sleep(0.5)
             self.serial_port.write(b'\r\n')
-            self.wait_to_send(b'\r\n')
+            sleep(0.5)
             self.serial_port.write(message)
-            self.wait_to_send(message)
+            sleep(0.5)
             self.serial_port.write(b'\r\n')
-            self.wait_to_send(b'\r\n')
+            sleep(0.5)
         else:
             sleep(1.5)
             self.serial_port.write(message) # for at command mode
