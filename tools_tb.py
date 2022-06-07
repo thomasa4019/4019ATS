@@ -1,75 +1,29 @@
+import chunk
+from email import message
+from pickle import FALSE
 import serial
 import serial.tools.list_ports
 from time import sleep
 from configparser import ConfigParser
-from ast import literal_eval as litev
+from ast import Break, literal_eval as litev
 import pandas as pd
 from tabulate import tabulate as tb
 import br_test, ar_test
 
 
-CONFIG_PATH = 'config.ini'
 
+
+CONFIG_PATH = 'config.ini'
 
 class NotEnoughRadioError(Exception):
     pass
 
 
 
-# come back to this
-class modem_serial:
-    def __init__(self, serial_port):
-        self.serial_port = serial_port
-
-    def send_serial_cmd(self, message, at_mode=False):
-        self.serial_port.flushInput()
-        self.serial_port.flushOutput()
-        if at_mode == False:
-            self.serial_port.write(b'\r\n')
-            self.serial_port.write(message)
-            self.serial_port.write(b'\r\n')
-        else:
-            self.serial_port.write(message) # for at command mode
-        
-    def read_serial_cmd(self):
-        message = self.serial_port.readall()
-        return message
-
-    def init_modem(self):
-        self.send_serial_cmd(b'ATZ')
-        sleep(1)
-        self.send_serial_cmd(b'ATZ')
-        sleep(2)
-        self.send_serial_cmd(b'+++', True)
-        sleep(2)
-        connected_message = self.read_serial_cmd()
-        print(connected_message)
-        print(b'OK' in connected_message)
-        if b'OK' in connected_message:
-            return True
-        else:
-            return False
-    
-    def set_register(self,register, set_value):
-        self.send_serial_cmd((bytes('ATS{}={}'.format(register, set_value), 'ascii')))
-        print((bytes('ATS{}={}'.format(register, set_value), 'ascii')))
-
-    def write_register_reset(self):
-        self.send_serial_cmd(b'AT&W')
-        self.send_serial_cmd(b'ATZ')
-
-    def factory_reset(self):
-        self.send_serial_cmd(b'AT&F')
-        self.send_serial_cmd(b'AT&W')
-        self.send_serial_cmd(b'ATZ')
-
-
 
 def close_all_serial(serial_port_list):
     print('shutting down serial ports')
-    for i in range(len(serial_port_list)):
-        serial_port_list[i].flushOutput()
-        serial_port_list[i].flushInput()
+    for i , com in enumerate(serial_port_list):
         serial_port_list[i].close()
     print('serial ports shutdown')
 
@@ -128,7 +82,7 @@ def disconect_reconnect_radios(current_baud, config_path, config_id='serial_conf
             print('attempting to attach radio at 57600')
             serial_port_tmp = serial.Serial(connected[i],baudrate=current_baud, \
                 parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE, \
-                timeout=0.05,rtscts=True) 
+                timeout=3,write_timeout=3,rtscts=True) 
             radio = modem_serial(serial_port_tmp)
             serial_port_tmp.baudrate = 57600
             print('check that radio can be talked to at 57600')
@@ -163,6 +117,70 @@ def factory_reset_all_radios(serial_port_list):
         close_all_serial(serial_port_list)
         new_serial_port_list = disconect_reconnect_radios(57600, CONFIG_PATH)
     return new_serial_port_list
+
+
+
+# come back to this
+class modem_serial:
+    def __init__(self, serial_port):
+        self.serial_port = serial_port
+
+    def wait_to_send(self, expected_message):
+        read_buffer = b''
+        while(True):
+            byte = self.serial_port.read()
+            read_buffer += byte
+            try:
+                if not len(read_buffer) == len(expected_message):
+                    break
+            except UnicodeEncodeError:
+                print('expected message could not be encoded')
+            except  serial.SerialException:
+                print('serial port in waiting could not read bytes')
+
+    def send_serial_cmd(self, message, at_mode=False):
+        self.serial_port.flushOutput()
+        self.serial_port.flushInput()
+        if at_mode == False:
+            sleep(0.5)
+            self.serial_port.write(b'\r\n')
+            self.wait_to_send(b'\r\n')
+            self.serial_port.write(message)
+            self.wait_to_send(message)
+            self.serial_port.write(b'\r\n')
+            self.wait_to_send(b'\r\n')
+        else:
+            sleep(1.5)
+            self.serial_port.write(message) # for at command mode
+            sleep(1.5)
+
+    def read_serial_cmd(self):
+        message = self.serial_port.readall()
+        return message
+
+    def init_modem(self):
+        self.send_serial_cmd(b'ATZ')
+        self.send_serial_cmd(b'+++', True)
+        connected_message = self.read_serial_cmd()
+        print(connected_message)
+        print(b'OK' in connected_message)
+        if b'OK' in connected_message:
+            return True
+        else:
+            return False
+    
+    def set_register(self,register, set_value):
+        self.send_serial_cmd((bytes('ATS{}={}'.format(register, set_value), 'ascii')))
+        print((bytes('ATS{}={}'.format(register, set_value), 'ascii')))
+
+    def write_register_reset(self):
+        self.send_serial_cmd(b'AT&W')
+        self.send_serial_cmd(b'ATZ')
+
+    def factory_reset(self):
+        self.send_serial_cmd(b'AT&F')
+        self.send_serial_cmd(b'AT&W')
+        self.send_serial_cmd(b'ATZ')
 
 
 
