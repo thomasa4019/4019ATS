@@ -22,15 +22,12 @@ def OpenSerialPort(port="COM6"):
     return fio2_ser
 
 
-def write_data(serial_port, message_data, stopped):
-    print('Start writing data.')
-    serial_port.timeout = 1.0
-    while not stopped.is_set():
-        try:
-            if len(message_data) >= 1:
-                serial_port.write(message_data)
-        except serial.SerialTimeoutException: 
-            print('serial port time out! Error')
+def write_data(serial_port, message_data):
+    try:
+        if len(message_data) >= 1:
+            serial_port.write(message_data.encode('utf-8'))
+    except serial.SerialTimeoutException: 
+        print('serial port time out! Error')
 
         
 def Read_Data(queue, serialPort, stopped):
@@ -51,10 +48,7 @@ def Read_Data(queue, serialPort, stopped):
             fio2_data = str(fio2_data).replace("\r\n","")
             fio2_data = fio2_data.replace("\x000","")
             queue.put(fio2_data)
-        else:
-            queue.put("Read_Data() no Data")
     serialPort.close()
-
 
 
 def Disp_Data(queue, stopped):
@@ -112,7 +106,7 @@ class modem_serial:
 if __name__ == "__main__":
     #serialPort = OpenSerialPort('/dev/ttyUSB0')
     message_data = ''
-    serialPort = OpenSerialPort('COM6')
+    serialPort = OpenSerialPort('COM49')
     if serialPort == None: sys.exit(1)
     queue = multiprocessing.Queue()
     stopped = threading.Event()
@@ -123,10 +117,10 @@ if __name__ == "__main__":
     p1.start()
     p2.start()
     counter = 0
-    while True:
+    while counter < 50:
         print('enter data')
         input_data = input()
-        #write_data(serialPort, b'4019TEST')
+        write_data(serialPort, input_data)
         try:
             time.sleep(1)
         except KeyboardInterrupt: #Capture Ctrl-C
@@ -136,4 +130,5 @@ if __name__ == "__main__":
             p2.join()
             serialPort.close()
             print ("Done")
-            stopped.set()     
+            stopped.set()   
+    counter += 1  
