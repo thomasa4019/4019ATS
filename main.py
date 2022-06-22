@@ -13,11 +13,12 @@ import threading, multiprocessing
 import sys
 import json
 from utilities import common_utils
-
+import pathlib
 
 
 def main():
-    main_config_path = r'C:\Users\RFD GP\Desktop\4019ATSTA\settings\main_config.json'
+    main_config_path = str(pathlib.Path(__file__).parent.resolve())
+    main_config_path += '\settings\main_config.json'
     json_section = 'disconnect_reconnect_data'
     serial_port_list = common_utils.disconect_reconnect_radios(57600, main_config_path, json_section)
     common_utils.close_all_serial(serial_port_list)
