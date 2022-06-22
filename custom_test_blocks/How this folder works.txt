@@ -1,0 +1,4 @@
+This folder is for a test block that is not definded by the RFDATS spreadsheet, but maybe a completely new project spreadsheet. 
+Might involve taking params and sorting them from mission planner for eg. Nothing to do with the modem tests in the beginning. 
+For new projects outside of the modem, a folder should be created and then the customised test blocks for that project can be stored in there. 
+For a test stream, you can look at the custom test streams folder. 

@@ -1,0 +1,4 @@
+This folder is to hold a specific saved test stream that can be recalled later from the gui. (OR BASH SCRIPT) which can then be run from bash terminal.
+Ie scotts throughput test, can be specific configuration of test blocks with certain repeats.
+All configured with a json file. easy.
+A folder should be created for each user or project, the test streams should then go in that respective folder. 
