@@ -3,10 +3,11 @@ import serial.tools.list_ports
 from time import sleep, time
 import threading, multiprocessing
 import sys
-
+import utilities.common_utils as common_utils
 
 #queue constantly being updated on thread.
 def Read_Data(queue, serial_port, stopped):
+    print('reader thread started')
     serial_port.timeout = 1
     while not stopped.is_set(): 
         fio2_data = ''       
@@ -32,8 +33,7 @@ class modem_serial:
         self.serial_port = serial_port
         self.queue = multiprocessing.Queue(10000) #set queue size to 10Kb
         self.stopped = threading.Event()
-        self.p1 = threading.Thread(target=Read_Data, args=(self.queue, serial_port, self.stopped,))
-        self.p1.daemon = True
+        self.p1 = threading.Thread(target=Read_Data, args=(self.queue, serial_port, self.stopped))
         self.p1.start()
 
     def send_serial_cmd(self, message_data, at_mode=False):
@@ -59,16 +59,15 @@ class modem_serial:
         list_fifo = []
         while not self.stopped.is_set():   
             if time() >= stop:
-                return False
+                return False, 'NULL'
             try:
                 list_fifo.append(self.queue.get(block=True, timeout=1.5))
             except:
-                print('no more data on queue!')
+                pass
             return_data = ''.join(list_fifo)
             print(return_data)
             if expected_response in return_data:
-                print(return_data)
-                return True
+                return True, return_data     # delete return_data here
 
     def init_modem(self):
         #TODO
@@ -76,34 +75,64 @@ class modem_serial:
         self.send_serial_cmd('\r\n')
         self.get_data_from_queue()
         self.send_serial_cmd('AT\r\n')
-        if self.get_data_from_queue('AT\r\nOK\r\n'):
+        status, reply = self.get_data_from_queue('AT\r\nOK\r\n')
+        if status == True:
             return True
         else:
             #if AT command doesnt respond, try get a response with +++
             self.send_serial_cmd('\r\n')
             self.get_data_from_queue()
             self.send_serial_cmd('+++', True)
-            if self.get_data_from_queue('OK\r\n\r\n'):
+            status, reply = self.get_data_from_queue('OK\r\n\r\n')
+            if status == True:
+                self.send_serial_cmd('\r\n')
+                self.get_data_from_queue()
                 return True
             else:
                 return False
 
     def multithread_read_shutdown(self):
         self.stopped.set()
+        self.p1.join()
 
     def power_cycle_radio(self):
         pass
 
-    #these need editing with the correct args for send_serial_cmd
-    def set_register(self,register, set_value):
-        self.send_serial_cmd((bytes('ATS{}={}'.format(register, set_value), 'ascii')))
-        print((bytes('ATS{}={}'.format(register, set_value), 'ascii')))
+       # return an array that has values and register number
+    def get_modem_param(self, key):
+        # make sure to change if on windows
+        dict_main_data = common_utils.def_read_json('Modem_Params', 'settings\main_config.json')
+        reg_num = dict_main_data.get(key)[-1]
+        val = dict_main_data.get(key)[0]
+        return reg_num, val
 
-    def write_register_reset(self):
-        self.send_serial_cmd(b'AT&W')
-        self.send_serial_cmd(b'ATZ')
+    #these need editing with the correct args for send_serial_cmd
+    def set_register(self, param_name, set_value):
+        status = []
+        set_cmd = 'ATS{}={}\r\n'.format(self.get_modem_param(param_name)[0], set_value)
+        self.send_serial_cmd(set_cmd)
+        boo, reply = self.get_data_from_queue('{}OK\r\n'.format(set_cmd))
+        status.append(boo)
+        self.send_serial_cmd('AT&W\r\n')
+        boo, reply = self.get_data_from_queue('AT&W\r\nOK\r\n') 
+        status.append(boo)
+        for i, status_val in enumerate(status):
+            if status_val != True:
+                return False
+        return True
+
+    def reboot_radio(self):
+        self.send_serial_cmd('ATZ\r\n')
+        self.get_data_from_queue()
 
     def factory_reset(self):
-        self.send_serial_cmd(b'AT&F')
-        self.send_serial_cmd(b'AT&W')
-        self.send_serial_cmd(b'ATZ')
+        self.send_serial_cmd('AT&F\r\n')
+        self.get_data_from_queue()
+        self.send_serial_cmd('AT&W\r\n')
+        self.get_data_from_queue()
+        self.send_serial_cmd('ATZ\r\n')
+        self.get_data_from_queue()
+
+    def clear_fifo():
+        #TODO
+        pass
