@@ -124,6 +124,8 @@ class modem_serial:
     def reboot_radio(self):
         self.send_serial_cmd('ATZ\r\n')
         self.get_data_from_queue()
+        sleep(0.55)
+
 
     def factory_reset(self):
         self.send_serial_cmd('AT&F\r\n')
