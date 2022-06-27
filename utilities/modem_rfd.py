@@ -67,7 +67,7 @@ class modem_serial:
             return_data = ''.join(list_fifo)
             print(return_data)
             if expected_response in return_data:
-                return True, return_data     # delete return_data here
+                return True, return_data
 
     def init_modem(self):
         #TODO
@@ -129,11 +129,9 @@ class modem_serial:
 
     def factory_reset(self):
         self.send_serial_cmd('AT&F\r\n')
-        self.get_data_from_queue()
+        self.get_data_from_queue('AT&F\r\nOK\r\n')
         self.send_serial_cmd('AT&W\r\n')
-        self.get_data_from_queue()
-        self.send_serial_cmd('ATZ\r\n')
-        self.get_data_from_queue()
+        self.get_data_from_queue('AT&W\r\nOK\r\n')
 
     def clear_fifo():
         #TODO

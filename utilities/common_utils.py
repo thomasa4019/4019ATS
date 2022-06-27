@@ -9,7 +9,6 @@ class NotEnoughRadioError(Exception):
     pass
 
 
-
 def close_all_serial(serial_port_list):
     print('shutting down serial ports')
     for i , com in enumerate(serial_port_list):
@@ -72,6 +71,7 @@ def factory_reset_all_radios(serial_port_list, config_path):
             radio = modem_rfd.modem_serial(serial_port_list[i])
             radio.init_modem()
             radio.factory_reset()
+            radio.reboot_radio()
             radio.multithread_read_shutdown() 
         close_all_serial(serial_port_list)
         new_serial_port_list = disconect_reconnect_radios(57600, config_path) # much faster way
