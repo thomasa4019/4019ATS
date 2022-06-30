@@ -5,6 +5,7 @@ sys.path.insert(1, parent_dir)
 from utilities import common_utils
 from tabulate import tabulate
 import pandas as pd
+import copy
 
 # Print single test case result to console
 def print_results_to_console(ID, reg_name, reg_num, test_params, results):
@@ -18,9 +19,36 @@ def print_results_to_console(ID, reg_name, reg_num, test_params, results):
     print('\r\nSummary table for ' + reg_name +' test case:')
     print(tabulate(table, headers=['ID','Register name', 'Register number', 'Param', 'PASS/FAIL'], tablefmt="grid"))
 
-# modem_data_list includes: reg_name, reg_num, test_params where reg_name could be greater than 1
-def print_3d_results_to_console(ID, modem_data_list, results):  
-    pass
+# ID is 1D
+# modem_data_list is a 3D lis, including: list of reg_name, reg_num, test_params 
+# results is 1D and must be equal to test_params in length
+def print_3d_results_to_console(ID, modem_data_list, results):
+    table = []
+    t1 = [ID]
+    t2 = []
+    data_len = len(modem_data_list)
+    results_len = len(results)
+
+    for i in range(data_len):
+        t1.extend(modem_data_list[i])
+
+    temp1 = copy.deepcopy(t1)
+    for i in range(len(results)):
+        for j in range(0, 3*data_len+1, 3):
+            temp1.pop(j)
+            temp1.insert(j, t1[j][i])
+        temp2 = copy.deepcopy(temp1)
+        temp2.append(results[i])
+        table.append(temp2)
+
+    # Header manipulation
+    headers = ['ID']
+    for i in range(data_len):
+        headers.extend(['Reg name', 'Reg num', 'Param'])
+    headers.append('P/F')
+    
+    print('\r\nTest case summary:')
+    print(tabulate(table, headers, tablefmt="grid"))
 
 #NOTE : reference material <- delete when done
 def print_results_to_excel(ID, reg_name, reg_num, test_params, results):
