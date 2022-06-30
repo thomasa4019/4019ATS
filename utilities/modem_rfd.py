@@ -1,8 +1,11 @@
+import sys
+import pathlib
+parent_dir = r'{}'.format(pathlib.Path( __file__ ).absolute().__str__().split('4019ATS', 1)[0] + '4019ATS')
+sys.path.insert(1, parent_dir)
 import serial
 import serial.tools.list_ports
 from time import sleep, time
 import threading, multiprocessing
-import sys
 import utilities.common_utils as common_utils
 
 
@@ -68,11 +71,12 @@ class modem_serial:
         if at_mode == False:
             try:
                 if len(message_data) >= 1:
+                    sleep(0.05)
                     self.serial_port.write(message_data.encode('utf-8'))
             except serial.SerialTimeoutException: 
                 print('serial port time out! Error')
     
-    def get_data_from_queue(self, list_ex_response, wait_to_start_max=0.5):
+    def get_data_from_queue(self, list_ex_response, wait_to_start_max=0.7):
         return_data = ''
         ex_found = []
         list_fifo = []
@@ -86,14 +90,14 @@ class modem_serial:
             if time() >= stop:
                 break
         while not self.stopped.is_set():
-            for i, ex_response in enumerate(list_ex_response):
-                if (ex_response in return_data) and (i not in ex_found):
-                    ex_found.append(i)
             try:
                 list_fifo.append(self.queue.get(block=True, timeout=0.3))
             except:
                 break
             return_data = ''.join(list_fifo)
+        for i, ex_response in enumerate(list_ex_response):
+            if (ex_response in return_data) and ((i + 1) not in ex_found):
+                ex_found.append(i + 1)
         if not ex_found:
             ex_found = False
         return ex_found, return_data
@@ -122,35 +126,39 @@ class modem_serial:
         self.p1.join()
 
     def get_modem_param(self, key):
-        dict_main_data = common_utils.def_read_json('Modem_Params', 'settings\main_config.json')
+        dict_main_data = common_utils.def_read_json('Modem_Params', parent_dir + '\settings\main_config.json')
         reg_num = dict_main_data.get(key)[-1]
         val = dict_main_data.get(key)[0]
         return reg_num, val
 
     def set_register(self, param_name, set_value):
-        status = []
         set_cmd = 'ATS{}={}\r\n'.format(self.get_modem_param(param_name)[0], set_value)
         self.send_serial_cmd(set_cmd)
-        boo, reply = self.get_data_from_queue('{}OK\r\n'.format(set_cmd))
-        status.append(boo)
         self.send_serial_cmd('AT&W\r\n')
-        boo, reply = self.get_data_from_queue('AT&W\r\nOK\r\n') 
-        status.append(boo)
-        for i, status_val in enumerate(status):
-            if status_val != True:
-                return False
-        return True
+        ex_found, response = self.get_data_from_queue([set_cmd, 'AT&W\r\n', 'OK\r\n'])
+        if ex_found == False:
+            return False
+        else: 
+            return True
+
 
     def reboot_radio(self):
         self.send_serial_cmd('ATZ\r\n')
-        self.get_data_from_queue('\r\n')
-        sleep(0.55)     #For processor loading of 1.75 seconds, +++ after ATZ command...
+        ex_found, response = self.get_data_from_queue('\r\n')
+        sleep(0.55)     #For processor loading of 1.75 seconds
+        if ex_found == False:
+            return False
+        else: 
+            return True
 
     def factory_reset(self):
         self.send_serial_cmd('AT&F\r\n')
-        self.get_data_from_queue('AT&F\r\nOK\r\n')
         self.send_serial_cmd('AT&W\r\n')
-        self.get_data_from_queue('AT&W\r\nOK\r\n')
+        ex_found, response = self.get_data_from_queue(['AT&W', 'AT&F\r\n, OK\r\n'])
+        if ex_found == False:
+            return False
+        else: 
+            return True
 
     def power_cycle_radio():
         pass
