@@ -3,18 +3,14 @@ import serial.tools.list_ports
 from time import sleep, time
 import threading, multiprocessing
 import sys
-import utilities.common_utils as common_utils
+import pathlib
+parent_dir = r'{}'.format(pathlib.Path( __file__ ).absolute().__str__().split('4019ATS', 1)[0] + '4019ATS')
+sys.path.insert(1, parent_dir)
+from utilities import common_utils
 
 
 
 def Read_Data(queue, serial_port, stopped, read_line_mode=False):
-    """Reader thread that contunously updates when there is a char or line of char depending on the Mode
-
-    Keyword arguments:
-    serial_port     -- serial port object allowing serial module to send and read
-    stopped         -- multithread event used to flag and stop the fifos process in case of errors
-    read_line_mode  -- If set to True, Read_Data processes a task as an entire line defined by carriage returns (default False)
-    """
     print('reader thread started')
     serial_port.timeout = 1
     while not stopped.is_set(): 
@@ -40,20 +36,13 @@ def Read_Data(queue, serial_port, stopped, read_line_mode=False):
 
 
 class modem_serial:
-    """modem_serial class; creates a radio serial object that has methods to read and write serial commands.
-    
-    Keyword arguments:
-    serial_port     -- serial port object allowing serial module to send and read
-    stopped         -- multithread event used to flag and stop the fifos process in case of errors
-    read_line_mode  -- If set to True, Read_Data processes a task as an entire line defined by carriage returns (default False)
-    """
     def __init__(self, serial_port, read_line_mode=False):
-        self.serial_port = serial_port                                                                                      #serial_port object attached to radio class on instantiation
-        self.read_line_mode = read_line_mode                                                                                #set radio to read line more, reads lines rather than char at a time. useful for RSSI
-        self.queue = multiprocessing.Queue(10000)                                                                           #set queue size to 10Kb
-        self.stopped = threading.Event()                                                                                    #create threading event for reader thread excetion
-        self.p1 = threading.Thread(target=Read_Data, args=(self.queue, serial_port, self.stopped, self.read_line_mode))     #instantiate contiunously updating fifo on a seperate thread
-        self.p1.start()                                                                                                     #start the thread
+        self.serial_port = serial_port
+        self.read_line_mode = read_line_mode
+        self.queue = multiprocessing.Queue(10000) #set queue size to 10Kb
+        self.stopped = threading.Event()
+        self.p1 = threading.Thread(target=Read_Data, args=(self.queue, serial_port, self.stopped, self.read_line_mode))
+        self.p1.start()
 
     def send_serial_cmd(self, message_data, at_mode=False):
         if at_mode == True:
@@ -72,45 +61,49 @@ class modem_serial:
             except serial.SerialTimeoutException: 
                 print('serial port time out! Error')
     
-    def get_data_from_queue(self, list_ex_response, wait_to_start_max=0.5):
+    #TODO add small delay with multiple responses options after 
+    def get_data_from_queue(self, list_ex_response, timeout=1):
         return_data = ''
         ex_found = []
         list_fifo = []
         if isinstance(list_ex_response, str):
             list_ex_response = [list_ex_response]
-        stop = time() + wait_to_start_max
+        stop = time() + timeout
         # wait for data in queue to show up with timeout
         while not self.stopped.is_set():
             if not self.queue.empty():
                 break
             if time() >= stop:
-                break
+                return False, return_data
+        stop = time() + timeout
         while not self.stopped.is_set():
+            if time() >= stop:
+                return ex_found, return_data
+            # block untill we have some characters wait 0.05 for char or if char get
             for i, ex_response in enumerate(list_ex_response):
-                if (ex_response in return_data) and (i not in ex_found):
+                if ex_response in return_data:
                     ex_found.append(i)
             try:
-                list_fifo.append(self.queue.get(block=True, timeout=0.3))
+                list_fifo.append(self.queue.get(block=True, timeout=0.05))
             except:
                 break
             return_data = ''.join(list_fifo)
-        if not ex_found:
-            ex_found = False
+            print(return_data)
         return ex_found, return_data
 
     def init_modem(self):
         self.send_serial_cmd('\r\n')
         self.get_data_from_queue('\r\n')
         self.send_serial_cmd('AT\r\n')
-        ex_found, reply = self.get_data_from_queue(['AT\r\n', 'OK\r\n'])
-        if ex_found != False:
+        status, reply = self.get_data_from_queue(['AT\r\n', 'OK\r\n'])
+        if status != False:
             return True
         else:
             self.send_serial_cmd('\r\n')
             self.get_data_from_queue('\r\n')
             self.send_serial_cmd('+++', True)
-            ex_found, reply = self.get_data_from_queue(['OK\r\n', '] OK\r\n'])
-            if ex_found != False:
+            status, reply = self.get_data_from_queue(['OK\r\n', '] OK\r\n'])
+            if status != False:
                 self.send_serial_cmd('\r\n')
                 self.get_data_from_queue('\r\n')
                 return True
@@ -120,6 +113,10 @@ class modem_serial:
     def multithread_read_shutdown(self):
         self.stopped.set()
         self.p1.join()
+
+    #TODO
+    def power_cycle_radio(self): 
+        pass
 
     def get_modem_param(self, key):
         dict_main_data = common_utils.def_read_json('Modem_Params', 'settings\main_config.json')
@@ -152,6 +149,14 @@ class modem_serial:
         self.send_serial_cmd('AT&W\r\n')
         self.get_data_from_queue('AT&W\r\nOK\r\n')
 
-    def power_cycle_radio():
+    def clear_fifo():
+        #TODO
         pass
 
+
+        
+def main():
+    
+
+if __name__ == '__main__':
+    main()

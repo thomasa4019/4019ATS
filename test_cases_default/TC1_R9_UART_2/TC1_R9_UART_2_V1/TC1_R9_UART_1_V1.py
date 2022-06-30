@@ -3,6 +3,7 @@ import pathlib
 parent_dir = r'{}'.format(pathlib.Path( __file__ ).absolute().__str__().split('4019ATS', 1)[0] + '4019ATS')
 sys.path.insert(1, parent_dir)
 import function_blocks.IS_block_function as fb_is
+import function_blocks.RL_block_function as fb_rl
 from utilities.modem_rfd import modem_serial
 import utilities.common_utils as common_utils
 import serial
@@ -13,8 +14,8 @@ def print_table_to_console():
     pass
 
 def main():
-    ##################### INITIALIZATION ###################
     serial_port_list, main_config_path = fb_is.IS_block()
+
     ################# write test case here #################
     status = [False, True, False]
     results = []
@@ -22,6 +23,7 @@ def main():
     serial_speed_list = standard_params_dict.get('SERIAL_SPEED')
     radio1 = modem_serial(serial_port_list[0])
     for i, baud_rate in enumerate(serial_speed_list):
+        #NOTE status[0] was returning FALSE with new get_data_from _queue func
         status[0] = radio1.set_register('SERIAL_SPEED', math.floor(baud_rate/1000))   # should return True
         radio1.reboot_radio()
         status[1] = radio1.init_modem()     # should return False
@@ -38,7 +40,8 @@ def main():
     serial_port_list = common_utils.factory_reset_all_radios(serial_port_list, main_config_path)    # factory reset here is to make the program runs faster by not performing baudrate at the beginning    common_utils.close_all_serial(serial_port_list)
     common_utils.close_all_serial(serial_port_list)
     ########################################################
-    # #RL_BLOCK.RL_block()
+    
+    fb_rl.RL_block()
 
 
 if __name__ == '__main__':

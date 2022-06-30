@@ -23,7 +23,6 @@ def def_read_json(json_section, config_path):
         return dictionary_out
 
 
-#replace read and settup config with read and setup for json file.
 def disconect_reconnect_radios(current_baud, config_path, json_section='disconnect_reconnect_data'):
     serial_port_list, connected, serial_port_tmp = ([] for i in range(3))
     comlist = serial.tools.list_ports.comports()
@@ -38,7 +37,7 @@ def disconect_reconnect_radios(current_baud, config_path, json_section='disconne
                 parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, \
                 timeout=3, write_timeout=3, rtscts=True) 
             radio = modem_rfd.modem_serial(serial_port_tmp)
-            serial_port_tmp.baudrate = 57600 # change this so its not declared in code.
+            serial_port_tmp.baudrate = 57600 #TODO change this so its not declared in code.
             print('check that radio can be talked to at 57600')
             if radio.init_modem() == True:
                 serial_port_list.append(serial_port_tmp)
@@ -60,9 +59,8 @@ def disconect_reconnect_radios(current_baud, config_path, json_section='disconne
         raise NotEnoughRadioError('Please connect radio(s), or try power cycling radio(s)')
     print(serial_port_list)
     return serial_port_list
+    
 
-
-# TODO: fix this factory reset function
 def factory_reset_all_radios(serial_port_list, config_path):
     if len(serial_port_list) < 1:
         raise NotEnoughRadioError('Cannot reset radio(s). Please connect radio(s), or try power cycling radio(s)')
@@ -74,8 +72,15 @@ def factory_reset_all_radios(serial_port_list, config_path):
             radio.reboot_radio()
             radio.multithread_read_shutdown() 
         close_all_serial(serial_port_list)
-        new_serial_port_list = disconect_reconnect_radios(57600, config_path) # much faster way
+        new_serial_port_list = disconect_reconnect_radios(57600, config_path)
     return new_serial_port_list
+
+
+
+
+
+
+
 
 
 
