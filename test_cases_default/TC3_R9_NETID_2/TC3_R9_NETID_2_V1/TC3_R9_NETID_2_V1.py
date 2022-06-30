@@ -20,9 +20,9 @@ def main():
     ################# write test case here #################
     reg_name = 'NETID'
     reg_num = 3
-    status = [False, False, False, False]
     results = []
     ID = []
+    status = [False, False, False, False]
     standard_params_dict = common_utils.def_read_json('Standard_Params', main_config_path)
     netid_list = standard_params_dict.get('NETID')
     radio1 = modem_serial(serial_port_list[0])
@@ -46,7 +46,10 @@ def main():
     radio2.multithread_read_shutdown()
     common_utils.close_all_serial(serial_port_list)
     ##################### RESULT LOGGING ###################
-    fb_rl.print_results_to_console(ID, reg_name, reg_num, netid_list, results)
+    modem_data_list = [
+        [reg_name, reg_num, netid_list]
+    ]
+    fb_rl.print_3d_results_to_console(ID, modem_data_list, results)
 
 if __name__ == '__main__':
     main()
