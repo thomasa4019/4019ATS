@@ -9,5 +9,5 @@ def IS_block():
     main_config_path = 'settings\main_config.json' #change to backslash for windows.
     json_section = 'disconnect_reconnect_data'
     serial_port_list = common_utils.disconect_reconnect_radios(57600, main_config_path, json_section)
-    serial_port_list = common_utils.factory_reset_all_radios(serial_port_list, main_config_path)
+    #serial_port_list = common_utils.factory_reset_all_radios(serial_port_list, main_config_path)   # 29/06 comment this out temporarily for NETID test
     return serial_port_list, main_config_path
