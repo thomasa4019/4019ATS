@@ -3,13 +3,15 @@ import pathlib
 parent_dir = r'{}'.format(pathlib.Path( __file__ ).absolute().__str__().split('4019ATS', 1)[0] + '4019ATS')
 sys.path.insert(1, parent_dir)
 from utilities import common_utils, modem_rfd
+import time
 
 def IS_block():
     main_config_path = parent_dir + r'\settings\main_config.json'
     json_section = 'disconnect_reconnect_data'
     serial_port_list = common_utils.disconect_reconnect_radios(57600, main_config_path, json_section)
     serial_port_list = common_utils.factory_reset_all_radios(serial_port_list, main_config_path)
-    return serial_port_list, main_config_path
+    time_start = time.time()
+    return serial_port_list, main_config_path, time_start
 
 # TODO
 def generate_lookup_data(serial_port_list):

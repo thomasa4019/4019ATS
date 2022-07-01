@@ -76,7 +76,7 @@ class modem_serial:
             except serial.SerialTimeoutException: 
                 print('serial port time out! Error')
     
-    def get_data_from_queue(self, list_ex_response, wait_to_start_max=0.7):
+    def get_data_from_queue(self, list_ex_response, wait_to_start_max=1):
         return_data = ''
         ex_found = []
         list_fifo = []
@@ -96,7 +96,7 @@ class modem_serial:
                 break
             return_data = ''.join(list_fifo)
         for i, ex_response in enumerate(list_ex_response):
-            if (ex_response in return_data) and ((i + 1) not in ex_found):
+            if (ex_response in return_data):
                 ex_found.append(i + 1)
         if not ex_found:
             ex_found = False
