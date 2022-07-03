@@ -7,6 +7,7 @@ import serial.tools.list_ports
 from time import sleep, time
 import threading, multiprocessing
 import utilities.common_utils as common_utils
+import os
 
 
 
@@ -53,16 +54,27 @@ class modem_serial:
     def __init__(self, serial_port, read_line_mode=False):
         self.serial_port = serial_port                                                                                      #serial_port object attached to radio class on instantiation
         self.read_line_mode = read_line_mode                                                                                #set radio to read line more, reads lines rather than char at a time. useful for RSSI
-        self.queue = multiprocessing.Queue(10000)                                                                           #set queue size to 10Kb
+        self.queue = multiprocessing.Queue(2049000)                                                                           #set queue size to 10Kb
         self.stopped = threading.Event()                                                                                    #create threading event for reader thread excetion
         self.p1 = threading.Thread(target=Read_Data, args=(self.queue, serial_port, self.stopped, self.read_line_mode))     #instantiate contiunously updating fifo on a seperate thread
-        self.p1.start()                                                                                                     #start the thread
+        self.p1.start()   
+        
+    def send_file_serial(self, file_dir):
+        try:
+            file_size = os.path.getsize(file_dir)
+            if file_size >= 1:
+                self.serial_port.write(open(file_dir, "rb").read())
+            return True
+        except serial.SerialTimeoutException: 
+            print('serial port time out! Error')
+            return False                                                                                        #start the thread
 
+    #TODO add in wait to send for ATZ case change radio reboot processor loading delay
     def send_serial_cmd(self, message_data, at_mode=False):
         if at_mode == True:
             try:
                 if len(message_data) >= 1:
-                    sleep(1.2)
+                    sleep(1.2) # manditory 1.3 sec delay before and after +++ 
                     self.serial_port.write(message_data.encode('utf-8'))
                     sleep(1.2)
                     self.serial_port.write('\r\n'.encode('utf-8'))
@@ -71,7 +83,7 @@ class modem_serial:
         if at_mode == False:
             try:
                 if len(message_data) >= 1:
-                    sleep(0.05)
+                    sleep(0.05) # to avoid writting multiple commands too quick to modem
                     self.serial_port.write(message_data.encode('utf-8'))
             except serial.SerialTimeoutException: 
                 print('serial port time out! Error')
@@ -91,7 +103,7 @@ class modem_serial:
                 break
         while not self.stopped.is_set():
             try:
-                list_fifo.append(self.queue.get(block=True, timeout=0.3))
+                list_fifo.append(self.queue.get(block=True, timeout=0.5))
             except:
                 break
             return_data = ''.join(list_fifo)
@@ -141,11 +153,10 @@ class modem_serial:
         else: 
             return True
 
-
     def reboot_radio(self):
         self.send_serial_cmd('ATZ\r\n')
         ex_found, response = self.get_data_from_queue('\r\n')
-        sleep(0.55)     #For processor loading of 1.75 seconds
+        sleep(3)     #For processor loading of 1.75 seconds (sleep orignialy 0.05) #NOTE the modem appears to take more time when sending data in op mode after atz
         if ex_found == False:
             return False
         else: 

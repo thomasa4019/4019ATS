@@ -12,9 +12,19 @@ import datetime
 
 '''When writting a new test case:
 
--- make sure to add in ID iteratiom for each sub test
+-- make sure to add in ID iteratiom for each sub test 
+    (ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S')))
+
 -- make sure to fill out the modem_data_list 
+    modem_data_list = [
+        ['SERIAL_SPEED', modem_params_dict.get('SERIAL_SPEED')[-1], baud_rate_list]
+    ]
+    
 -- create a results list of PASS or FAIL strings depeding on subtest results
+        if radio1.init_modem() == True:
+            results.append('PASS')
+        else:
+            results.append('FAIL')
 '''
 
 def main():
@@ -24,7 +34,7 @@ def main():
     ################# write test case here #################
     modem_params_dict = common_utils.def_read_json('Modem_Params', main_config_path)
     standard_params_dict = common_utils.def_read_json('Standard_Params', main_config_path)
-    serial_speed_param_list = modem_params_dict.get('SERIAL_SPEED')[0]  #NOTE maybe move into IS blocl
+    serial_speed_param_list = modem_params_dict.get('SERIAL_SPEED')[0]  #NOTE maybe move into IS block
     baud_rate_list = standard_params_dict.get('SERIAL_SPEED')   #NOTE maybe move into IS block
     radio1 = modem_serial(serial_port_list[0])
     for i, baud_rate_param in enumerate(baud_rate_list):

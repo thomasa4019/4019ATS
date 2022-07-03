@@ -34,17 +34,16 @@ def disconect_reconnect_radios(current_baud, config_path, json_section='disconne
         try:
             print('attempting to attach radio at 57600 located at {}'.format(connected[i]))
             serial_port_tmp = serial.Serial(connected[i],baudrate=current_baud, \
-                parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, \
-                timeout=3, write_timeout=3, rtscts=True) 
+                bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, \
+                timeout=3, rtscts=True) 
             radio = modem_rfd.modem_serial(serial_port_tmp)
-            serial_port_tmp.baudrate = 57600 #TODO change this so its not declared in code.
+            serial_port_tmp.baudrate = 57600
             print('check that radio can be talked to at 57600')
             if radio.init_modem() == True:
                 serial_port_list.append(serial_port_tmp)
                 radio.multithread_read_shutdown()
             else:
                 for j in range(len(baud_rates)):
-                    #radio = modem_serial(serial_port_tmp)
                     print('attempting to attach radio at {}'.format(baud_rates[j]))
                     serial_port_tmp.baudrate = baud_rates[j]
                     print('check that radio can be talked to at {}'.format(baud_rates[j]))
