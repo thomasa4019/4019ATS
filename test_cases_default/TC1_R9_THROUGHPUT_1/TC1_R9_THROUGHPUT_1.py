@@ -64,7 +64,7 @@ def main():
             time_diff = (time.time() - start_time) - read_time_diff
             #through_put = os.path.getsize(test_file_dir) / time_diff 
             through_put = (len(reply) * 8) / time_diff 
-            print('Throughput = {} kb/sec'.format((through_put / 8) / 1000))
+            print('Throughput = {} KB/sec'.format((through_put / 8) / 1000))
     radio1.multithread_read_shutdown()
     radio2.multithread_read_shutdown()
     quit()
