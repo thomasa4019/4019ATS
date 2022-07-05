@@ -28,7 +28,7 @@ import datetime
 '''
 
 def main():
-    radio_serial_port_list, main_config_path, time_start, power_meter_serial_port_list = fb_is.IS_block()
+    serial_port_list, main_config_path, time_start = fb_is.IS_block()
     results, ID = ([] for i in range(2)) # results and id pre defined
 
     ################# write test case here #################
@@ -36,7 +36,7 @@ def main():
     standard_params_dict = common_utils.def_read_json('Standard_Params', main_config_path)
     serial_speed_param_list = modem_params_dict.get('SERIAL_SPEED')[0]  #NOTE maybe move into IS block
     baud_rate_list = standard_params_dict.get('SERIAL_SPEED')   #NOTE maybe move into IS block
-    radio1 = modem_serial(radio_serial_port_list[0])
+    radio1 = modem_serial(serial_port_list[0])
     for i, baud_rate_param in enumerate(baud_rate_list):
         radio1.set_register('SERIAL_SPEED', serial_speed_param_list[i])
         radio1.reboot_radio()
@@ -50,7 +50,7 @@ def main():
     radio1.reboot_radio()   
     radio1.serial_port.baudrate = 57600
     radio1.multithread_read_shutdown()
-    common_utils.close_all_serial(radio_serial_port_list)
+    common_utils.close_all_serial(serial_port_list)
     ########################################################
 
     modem_data_list = [

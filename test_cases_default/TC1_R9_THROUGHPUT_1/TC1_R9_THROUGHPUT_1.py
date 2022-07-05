@@ -35,7 +35,7 @@ from os import walk
 
 
 def main():
-    radio_serial_port_list, main_config_path, time_start, power_meter_serial_port_list = fb_is.IS_block()
+    serial_port_list, main_config_path, time_start = fb_is.IS_block()
     results, ID = ([] for i in range(2)) # results and id pre defined
 
     ################# write test case here #################
@@ -44,14 +44,14 @@ def main():
     
     #NOTE need to increase buffer size, pyserial caps at 1024
     file_dir_list = []
-    radio_serial_port_list[0].set_buffer_size(rx_size = 2049000, tx_size = 2049000)
-    radio_serial_port_list[1].set_buffer_size(rx_size = 2049000, tx_size = 2049000)
+    serial_port_list[0].set_buffer_size(rx_size = 2049000, tx_size = 2049000)
+    serial_port_list[1].set_buffer_size(rx_size = 2049000, tx_size = 2049000)
     file_names = next(walk(parent_dir + '\\test_files\\'), (None, None, []))[2]
     for i, file_name in enumerate(file_names):
         file_dir_list.append(parent_dir + '\\test_files\\' + file_name)
     file_dir_list = sorted(file_dir_list, key =  lambda x: os.stat(x).st_size)
-    radio1 = modem_serial(radio_serial_port_list[0])
-    radio2 = modem_serial(radio_serial_port_list[1])
+    radio1 = modem_serial(serial_port_list[0])
+    radio2 = modem_serial(serial_port_list[1])
     radio1.reboot_radio()
     radio2.reboot_radio()
     for i, file_dir in enumerate(file_dir_list):
