@@ -8,15 +8,15 @@ import time
 def IS_block():
     main_config_path = parent_dir + r'\settings\main_config.json'
     json_section = 'disconnect_reconnect_data'
-    radio_serial_port_list, power_meter_serial_port_list = common_utils.disconect_reconnect_radios(57600, main_config_path, json_section)
-    radio_serial_port_list = common_utils.factory_reset_all_radios(radio_serial_port_list, main_config_path)
+    serial_port_list = common_utils.disconect_reconnect_radios(57600, main_config_path, json_section)
+    serial_port_list = common_utils.factory_reset_all_radios(serial_port_list, main_config_path)
     time_start = time.time()
-    return radio_serial_port_list, main_config_path, time_start, power_meter_serial_port_list
+    return serial_port_list, main_config_path, time_start
 
 # TODO
-def generate_lookup_data(radio_serial_port_list):
+def generate_lookup_data(serial_port_list):
     register_params, param_values = ([] for i in range(2))
-    radio1 = modem_rfd.modem_serial(radio_serial_port_list[0])
+    radio1 = modem_rfd.modem_serial(serial_port_list[0])
     radio1.init_modem()
     #radio1.read_line_mode = True
 
@@ -29,8 +29,8 @@ def generate_lookup_data(radio_serial_port_list):
 
 
 def main():
-    radio_serial_port_list, main_config_path = IS_block()
-    generate_lookup_data(radio_serial_port_list)
+    serial_port_list, main_config_path = IS_block()
+    generate_lookup_data(serial_port_list)
 
 
 if __name__ == '__main__':
