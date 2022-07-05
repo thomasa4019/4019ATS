@@ -30,19 +30,10 @@ from os import walk
             results.append('FAIL')
 '''
 
-
-#NOTE currently working for all file sizes, but needs updating and testing.
-
-
 def main():
     serial_port_list, main_config_path, time_start = fb_is.IS_block()
-    results, ID = ([] for i in range(2)) # results and id pre defined
 
     ################# write test case here #################
-    #radio 1 com 4
-    #radio 2 com 7
-    
-    #NOTE need to increase buffer size, pyserial caps at 1024
     file_dir_list = []
     serial_port_list[0].set_buffer_size(rx_size = 2049000, tx_size = 2049000)
     serial_port_list[1].set_buffer_size(rx_size = 2049000, tx_size = 2049000)
@@ -62,19 +53,11 @@ def main():
         read_time_diff = time.time() - read_time
         if ex_found != False:
             time_diff = (time.time() - start_time) - read_time_diff
-            #through_put = os.path.getsize(test_file_dir) / time_diff 
             through_put = (len(reply) * 8) / time_diff 
             print('Throughput = {} KB/sec'.format((through_put / 8) / 1000))
     radio1.multithread_read_shutdown()
     radio2.multithread_read_shutdown()
-    quit()
     ########################################################
-
-    # modem_data_list = [
-    #     ['SERIAL_SPEED', modem_params_dict.get('SERIAL_SPEED')[-1], baud_rate_list]
-    # ]
-
-    #fb_rl.RL_block(ID, modem_data_list, results, time_start)
 
 
 if __name__ == '__main__':
