@@ -174,3 +174,85 @@ class modem_serial:
     def power_cycle_radio():
         pass
 
+
+
+class Power_Meter:
+    """modem_serial class; creates a radio serial object that has methods to read and write serial commands.
+
+    Keyword arguments:
+    serial_port     -- serial port object allowing serial module to send and read
+    stopped         -- multithread event used to flag and stop the fifos process in case of errors
+    read_line_mode  -- If set to True, Read_Data processes a task as an entire line defined by carriage returns (default False)
+    """
+    def __init__(self, serial_port, read_line_mode=False):
+        self.serial_port = serial_port                                                                                      #serial_port object attached to radio class on instantiation
+        self.read_line_mode = read_line_mode                                                                                #set radio to read line more, reads lines rather than char at a time. useful for RSSI
+        self.queue = multiprocessing.Queue(2049000)                                                                           #set queue size to 10Kb
+        self.stopped = threading.Event()                                                                                    #create threading event for reader thread excetion
+        self.p1 = threading.Thread(target=Read_Data, args=(self.queue, serial_port, self.stopped, self.read_line_mode))     #instantiate contiunously updating fifo on a seperate thread
+        self.p1.start()        
+
+    #TODO add in wait to send for ATZ case change radio reboot processor loading delay
+    def send_serial_cmd(self, message_data, at_mode=False):
+        if at_mode == True:
+            try:
+                if len(message_data) >= 1:
+                    sleep(1.2) # manditory 1.3 sec delay before and after +++ 
+                    self.serial_port.write(message_data.encode('utf-8'))
+                    sleep(1.2)
+                    self.serial_port.write('\r\n'.encode('utf-8'))
+            except serial.SerialTimeoutException: 
+                print('serial port time out! Error')
+        if at_mode == False:
+            try:
+                if len(message_data) >= 1:
+                    sleep(0.05) # to avoid writting multiple commands too quick to modem
+                    self.serial_port.write(message_data.encode('utf-8'))
+            except serial.SerialTimeoutException: 
+                print('serial port time out! Error')
+    
+    def get_data_from_queue(self, list_ex_response, wait_to_start_max=1):
+        return_data = ''
+        ex_found = []
+        list_fifo = []
+        if isinstance(list_ex_response, str):
+            list_ex_response = [list_ex_response]
+        stop = time() + wait_to_start_max
+        # wait for data in queue to show up with timeout
+        while not self.stopped.is_set():
+            if not self.queue.empty():
+                break
+            if time() >= stop:
+                break
+        while not self.stopped.is_set():
+            try:
+                list_fifo.append(self.queue.get(block=True, timeout=0.5))
+            except:
+                break
+            return_data = ''.join(list_fifo)
+        for i, ex_response in enumerate(list_ex_response):
+            if (ex_response in return_data):
+                ex_found.append(i + 1)
+        if not ex_found:
+            ex_found = False
+        return ex_found, return_data
+    
+    def init_power_meter(self):
+        self.send_serial_cmd('\r\n')
+        ex_found, reply = self.get_data_from_queue(['description', 'Unknown Command'])
+        print(reply)
+        if ex_found != False:
+            return True
+        else:
+            return False
+
+    def set_offset(self, offset):
+        self.send_serial_cmd()
+        pass
+
+    def get_reading():
+        pass
+
+    def multithread_read_shutdown(self):
+        self.stopped.set()
+        self.p1.join()
