@@ -11,7 +11,7 @@ def IS_block():
     serial_port_list = common_utils.disconect_reconnect_radios(57600, main_config_path, json_section)
     serial_port_list = common_utils.factory_reset_all_radios(serial_port_list, main_config_path)
     time_start = time.time()
-    common_utils.generate_lookup_data(serial_port_list)
+    #common_utils.generate_lookup_data(serial_port_list)
     return serial_port_list, main_config_path, time_start
 
 

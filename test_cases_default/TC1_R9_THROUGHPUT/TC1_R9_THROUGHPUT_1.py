@@ -41,23 +41,22 @@ def main():
     for i, file_name in enumerate(file_names):
         file_dir_list.append(parent_dir + '\\test_files\\' + file_name)
     file_dir_list = sorted(file_dir_list, key =  lambda x: os.stat(x).st_size)
-    radio1 = modem_serial(serial_port_list[0])
-    radio2 = modem_serial(serial_port_list[1])
+    radio1 = modem_serial(serial_port_list[0], True)
+    radio2 = modem_serial(serial_port_list[1], True)
     radio1.reboot_radio()
     radio2.reboot_radio()
+    #radio1.serial_port.write_timeout = 10 # only send file for 10 sec
     start_time = time.time()
-    radio1.serial_port.write_timeout = 10 # only send file for 10 sec
-    radio1.send_file_serial(file_dir_list[9]) #512k file send
-    read_time = time.time()
+    radio1.send_file_serial(file_dir_list[4]) #512k file send
     ex_found, reply = radio2.get_data_from_queue(['CTL1_TRX', '\r\n']) #only read for 10 sec
-    read_time_diff = time.time() - read_time
+    time_diff = (time.time() - start_time)
     if ex_found != False:
-        time_diff = (time.time() - start_time) - read_time_diff
-        through_put = (len(reply) * 8) / time_diff 
+        through_put = ((len(reply) * 8) / time_diff)
+        print('total bytes received ')
+        print('runtime = {}'.format(time_diff))
         print('Throughput = {} Kb/sec'.format((through_put)))
     radio1.multithread_read_shutdown()
     radio2.multithread_read_shutdown()
-    quit()
     ########################################################
 
 

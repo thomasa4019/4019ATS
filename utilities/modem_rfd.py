@@ -63,11 +63,12 @@ class modem_serial:
         try:
             file_size = os.path.getsize(file_dir)
             if file_size >= 1:
-                self.serial_port.write(open(file_dir, "rb").read())
-            return True
+                file_data = open(file_dir, "rb").read()
+                self.serial_port.write(file_data)
         except serial.SerialTimeoutException: 
-            print('serial port time out!')
-            return True                                                                                    #start the thread
+            print('file send stopped')
+            pass
+                                                                                   #start the thread
 
     #TODO add in wait to send for ATZ case change radio reboot processor loading delay
     def send_serial_cmd(self, message_data, at_mode=False):
@@ -88,37 +89,22 @@ class modem_serial:
             except serial.SerialTimeoutException: 
                 print('serial port time out! Error')
     
-    def clear_queue(self):
-        try:
-            while True:
-                self.queue.get_nowait()
-        except self.queue.empty:
-            pass
-    
-    def get_data_from_queue(self, list_ex_response, wait_to_start_max=1, stopped_flag_timeout=0):
+    def get_data_from_queue(self, list_ex_response, wait_to_start_max=1):
         return_data = ''
         ex_found = []
         list_fifo = []
-        stopped_timer_flag = False
-        if stopped_flag_timeout > 0:
-            stopped_timer_flag = True
-        else: stopped_timer_flag = False
         if isinstance(list_ex_response, str):
             list_ex_response = [list_ex_response]
         stop = time() + wait_to_start_max
-        # wait for data in queue to show up with timeout
         while not self.stopped.is_set():
             if not self.queue.empty():
                 break
             if time() >= stop:
                 break
-        stopped_timer_timeout = time() + stopped_flag_timeout
         while not self.stopped.is_set():
             try:
-                if stopped_timer_flag == True and (time() >= stopped_timer_timeout):
-                    self.clear_queue()
-                    break
                 list_fifo.append(self.queue.get(block=True, timeout=0.5))
+                #list_fifo.append(self.queue.get_nowait())
             except:
                 break
             return_data = ''.join(list_fifo)

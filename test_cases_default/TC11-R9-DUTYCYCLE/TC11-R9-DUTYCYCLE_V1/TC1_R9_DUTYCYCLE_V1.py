@@ -10,6 +10,7 @@ import utilities.common_utils as common_utils
 import time
 import datetime
 import os
+from os import walk
 '''When writting a new test case:
 
 -- make sure to add in ID iteratiom for each sub test 
@@ -33,54 +34,35 @@ def main():
 
     ################# write test case here #################
     file_dir_list = []
-    serial_port_list[0].set_buffer_size(rx_size = 2049000, tx_size = 2049000)
-    serial_port_list[1].set_buffer_size(rx_size = 2049000, tx_size = 2049000)
     modem_params_dict = common_utils.def_read_json('Modem_Params', main_config_path)
     standard_params_dict = common_utils.def_read_json('Standard_Params', main_config_path)
-    duty_cycle_param_list = modem_params_dict.get('DUTY_CYCLE')[0]  
-    duty_cycle_list = standard_params_dict.get('DUTY_CYCLE')
-    file_names = next(os.walk(parent_dir + '\\test_files\\'), (None, None, []))[2]
+    duty_cycle_list = standard_params_dict.get('DUTY_CYCLE')   #NOTE maybe move into IS block
+    serial_port_list[0].set_buffer_size(rx_size = 2049000, tx_size = 2049000)
+    serial_port_list[1].set_buffer_size(rx_size = 2049000, tx_size = 2049000)
+    file_names = next(walk(parent_dir + '\\test_files\\'), (None, None, []))[2]
     for i, file_name in enumerate(file_names):
         file_dir_list.append(parent_dir + '\\test_files\\' + file_name)
     file_dir_list = sorted(file_dir_list, key =  lambda x: os.stat(x).st_size)
-    radio1 = modem_serial(serial_port_list[0])
-    radio2 = modem_serial(serial_port_list[1])
-    # set to 100% duty cycle and record expected throughput.
-    radio1.set_register('DUTY_CYCLE', duty_cycle_list[-1]) # NOTE set to duty cycle param list[i] after lookup gen def is finished
+    radio1 = modem_serial(serial_port_list[0], True)
+    radio2 = modem_serial(serial_port_list[1], True)
     radio1.reboot_radio()
     radio2.reboot_radio()
-    start_time = time.time()
-    radio1.send_file_serial(file_dir_list[0])
-    read_time = time.time()
-    ex_found, reply = radio2.get_data_from_queue(['CTL1_TRX', '\r\n'])
-    read_time_diff = time.time() - read_time
-    if 1 in ex_found:
-        time_diff = (time.time() - start_time) - read_time_diff
-        full_dc_through_put = (len(reply) * 8) / time_diff 
-        print('Throughput = {} KB/sec'.format((full_dc_through_put / 8) / 1000))
-        start_time = 0
+    radio1.serial_port.write_timeout = 10 # only send file for 10 sec
     for i, duty_cycle in enumerate(duty_cycle_list):
-        print(duty_cycle)
         radio1.init_modem()
-        radio2.init_modem()
-        radio1.set_register('DUTY_CYCLE', duty_cycle) # NOTE set to duty cycle param list[i] after lookup gen def is finished
-        radio2.set_register('DUTY_CYCLE', duty_cycle)
+        radio1.set_register('DUTY_CYCLE', duty_cycle)
         radio1.reboot_radio()
-        radio2.reboot_radio()
         start_time = time.time()
-        radio1.send_file_serial(file_dir_list[0])
-        read_time = time.time()
-        ex_found, reply = radio2.get_data_from_queue(['CTL1_TRX', '\r\n'])
-        read_time_diff = time.time() - read_time
-        print(reply)
-        print(ex_found)
+        radio1.send_file_serial(file_dir_list[9]) #512k file send
+        ex_found, reply = radio2.get_data_from_queue(['CTL1_TRX', '\r\n']) #only read for 10 sec
+        time_diff = (time.time() - start_time)
         if ex_found != False:
-            time_diff = (time.time() - start_time) - read_time_diff
-            through_put = (len(reply) * 8) / time_diff 
-            print('Throughput = {} KB/sec'.format((through_put / 8) / 1000))
-        #(ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S')))
-        radio1.multithread_read_shutdown()
-        radio2.multithread_read_shutdown()
+            through_put = ((len(reply) * 8) / time_diff)
+            print('total bytes received ')
+            print('runtime = {}'.format(time_diff))
+            print('Throughput = {} Kb/sec'.format((through_put)))
+    radio1.multithread_read_shutdown()
+    radio2.multithread_read_shutdown()
     quit()
     ########################################################
 
