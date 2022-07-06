@@ -66,8 +66,8 @@ class modem_serial:
                 self.serial_port.write(open(file_dir, "rb").read())
             return True
         except serial.SerialTimeoutException: 
-            print('serial port time out! Error')
-            return False                                                                                        #start the thread
+            print('serial port time out!')
+            return True                                                                                    #start the thread
 
     #TODO add in wait to send for ATZ case change radio reboot processor loading delay
     def send_serial_cmd(self, message_data, at_mode=False):
@@ -88,10 +88,21 @@ class modem_serial:
             except serial.SerialTimeoutException: 
                 print('serial port time out! Error')
     
-    def get_data_from_queue(self, list_ex_response, wait_to_start_max=1):
+    def clear_queue(self):
+        try:
+            while True:
+                self.queue.get_nowait()
+        except self.queue.empty:
+            pass
+    
+    def get_data_from_queue(self, list_ex_response, wait_to_start_max=1, stopped_flag_timeout=0):
         return_data = ''
         ex_found = []
         list_fifo = []
+        stopped_timer_flag = False
+        if stopped_flag_timeout > 0:
+            stopped_timer_flag = True
+        else: stopped_timer_flag = False
         if isinstance(list_ex_response, str):
             list_ex_response = [list_ex_response]
         stop = time() + wait_to_start_max
@@ -101,8 +112,12 @@ class modem_serial:
                 break
             if time() >= stop:
                 break
+        stopped_timer_timeout = time() + stopped_flag_timeout
         while not self.stopped.is_set():
             try:
+                if stopped_timer_flag == True and (time() >= stopped_timer_timeout):
+                    self.clear_queue()
+                    break
                 list_fifo.append(self.queue.get(block=True, timeout=0.5))
             except:
                 break
@@ -170,6 +185,7 @@ class modem_serial:
             return False
         else: 
             return True
+
 
     def power_cycle_radio():
         pass

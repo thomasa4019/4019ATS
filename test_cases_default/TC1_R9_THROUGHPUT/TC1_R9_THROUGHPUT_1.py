@@ -45,18 +45,19 @@ def main():
     radio2 = modem_serial(serial_port_list[1])
     radio1.reboot_radio()
     radio2.reboot_radio()
-    for i, file_dir in enumerate(file_dir_list):
-        start_time = time.time()
-        radio1.send_file_serial(file_dir)
-        read_time = time.time()
-        ex_found, reply = radio2.get_data_from_queue(['CTL1_TRX', '\r\n'])
-        read_time_diff = time.time() - read_time
-        if ex_found != False:
-            time_diff = (time.time() - start_time) - read_time_diff
-            through_put = (len(reply) * 8) / time_diff 
-            print('Throughput = {} KB/sec'.format((through_put / 8) / 1000))
+    start_time = time.time()
+    radio1.serial_port.write_timeout = 10 # only send file for 10 sec
+    radio1.send_file_serial(file_dir_list[9]) #512k file send
+    read_time = time.time()
+    ex_found, reply = radio2.get_data_from_queue(['CTL1_TRX', '\r\n']) #only read for 10 sec
+    read_time_diff = time.time() - read_time
+    if ex_found != False:
+        time_diff = (time.time() - start_time) - read_time_diff
+        through_put = (len(reply) * 8) / time_diff 
+        print('Throughput = {} Kb/sec'.format((through_put)))
     radio1.multithread_read_shutdown()
     radio2.multithread_read_shutdown()
+    quit()
     ########################################################
 
 
