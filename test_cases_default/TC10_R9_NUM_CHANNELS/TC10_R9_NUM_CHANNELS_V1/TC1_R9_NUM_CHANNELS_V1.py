@@ -34,27 +34,31 @@ def main():
     ################# write test case here #################
     modem_params_dict = common_utils.def_read_json('Modem_Params', main_config_path)
     standard_params_dict = common_utils.def_read_json('Standard_Params', main_config_path)
-    serial_speed_param_list = modem_params_dict.get('SERIAL_SPEED')[0]  #NOTE maybe move into IS block
-    baud_rate_list = standard_params_dict.get('SERIAL_SPEED')   #NOTE maybe move into IS block
+    num_channels_param_list = modem_params_dict.get('NUM_CHANNELS')[0]  #NOTE maybe move into IS block
+    num_channels_list = standard_params_dict.get('NUM_CHANNELS')   #NOTE maybe move into IS block
     radio1 = modem_serial(serial_port_list[0])
-    for i, baud_rate_param in enumerate(baud_rate_list):
-        radio1.set_register('SERIAL_SPEED', serial_speed_param_list[i])
+    radio2 = modem_serial(serial_port_list[1])
+    for i, channel_num in enumerate(num_channels_list):
+        radio1.set_register('NUM_CHANNELS', channel_num)   
+        radio2.set_register('NUM_CHANNELS', channel_num)  
         radio1.reboot_radio()
-        radio1.serial_port.baudrate = baud_rate_param
-        if radio1.init_modem() == True:
-            results.append('PASS')
-        else:
+        radio2.reboot_radio()
+        radio1.init_modem()
+        radio2.init_modem()
+        radio1.send_serial_cmd('RT\r\n')
+        ex_found, reply_1 = radio1.get_data_from_queue(['RT\r\n', 'OK\r\n'])    
+        if ex_found == False:
             results.append('FAIL')
-        ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
-    radio1.set_register('SERIAL_SPEED', 57)
-    radio1.reboot_radio()   
-    radio1.serial_port.baudrate = 57600
+        else:
+            results.append('PASS')
+        ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))   
     radio1.multithread_read_shutdown()
+    radio2.multithread_read_shutdown()
     common_utils.close_all_serial(serial_port_list)
     ########################################################
 
     modem_data_list = [
-        ['SERIAL_SPEED', modem_params_dict.get('SERIAL_SPEED')[-1], baud_rate_list]
+        ['NUM_CHANNELS', modem_params_dict.get('NUM_CHANNELS')[-1], num_channels_list]
     ]
 
     fb_rl.RL_block(ID, modem_data_list, results, time_start)
