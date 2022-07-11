@@ -22,6 +22,20 @@ def def_read_json(json_section, config_path):
         dictionary_out = data[json_section]
         return dictionary_out
 
+        # TODO
+def generate_lookup_data(serial_port_list):
+    register_params, param_values = ([] for i in range(2))
+    radio1 = modem_rfd.modem_serial(serial_port_list[0])
+    radio1.init_modem()
+    #radio1.read_line_mode = True
+
+    radio1.send_serial_cmd('ATI5?\r\n')
+    ex_found, return_data = radio1.get_data_from_queue(['S0:', 'SERIAL_SPEED', 'NUM_CHANNELS'])
+    print('==============================================================================')
+    print(ex_found)
+    print(return_data)
+    radio1.multithread_read_shutdown()
+
 
 def disconect_reconnect_radios(current_baud, config_path, json_section='disconnect_reconnect_data'):
     serial_port_list, connected, serial_port_tmp = ([] for i in range(3))

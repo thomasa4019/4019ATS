@@ -63,11 +63,12 @@ class modem_serial:
         try:
             file_size = os.path.getsize(file_dir)
             if file_size >= 1:
-                self.serial_port.write(open(file_dir, "rb").read())
-            return True
+                file_data = open(file_dir, "rb").read()
+                self.serial_port.write(file_data)
         except serial.SerialTimeoutException: 
-            print('serial port time out! Error')
-            return False                                                                                        #start the thread
+            print('file send stopped')
+            pass
+                                                                                   #start the thread
 
     #TODO add in wait to send for ATZ case change radio reboot processor loading delay
     def send_serial_cmd(self, message_data, at_mode=False):
@@ -95,7 +96,6 @@ class modem_serial:
         if isinstance(list_ex_response, str):
             list_ex_response = [list_ex_response]
         stop = time() + wait_to_start_max
-        # wait for data in queue to show up with timeout
         while not self.stopped.is_set():
             if not self.queue.empty():
                 break
@@ -104,6 +104,7 @@ class modem_serial:
         while not self.stopped.is_set():
             try:
                 list_fifo.append(self.queue.get(block=True, timeout=0.5))
+                #list_fifo.append(self.queue.get_nowait())
             except:
                 break
             return_data = ''.join(list_fifo)
@@ -170,6 +171,7 @@ class modem_serial:
             return False
         else: 
             return True
+
 
     def power_cycle_radio():
         pass
