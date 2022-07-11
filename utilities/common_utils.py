@@ -88,8 +88,7 @@ def factory_reset_all_radios(serial_port_list, config_path):
         new_serial_port_list = disconect_reconnect_radios(57600, config_path)
     return new_serial_port_list
 
-
-
+    
 
 
 

@@ -43,12 +43,17 @@ def main():
     file_dir_list = sorted(file_dir_list, key =  lambda x: os.stat(x).st_size)
     radio1 = modem_serial(serial_port_list[0], True)
     radio2 = modem_serial(serial_port_list[1], True)
+    # radio1.set_register('SERIAL_SPEED', 460800)
+    # radio2.set_register('SERIAL_SPEED', 460800)
     radio1.reboot_radio()
     radio2.reboot_radio()
-    #radio1.serial_port.write_timeout = 10 # only send file for 10 sec
+    # radio1.serial_port.baudrate = 460800
+    # radio2.serial_port.baudrate = 460800
+    radio1.serial_port.write_timeout = 10 # only send file for 10 sec or less
+    radio1.send_file_serial(file_dir_list[9]) #512k file send for 10 sec or less
     start_time = time.time()
-    radio1.send_file_serial(file_dir_list[4]) #512k file send
-    ex_found, reply = radio2.get_data_from_queue(['CTL1_TRX', '\r\n']) #only read for 10 sec
+    ex_found, reply = radio2.get_data_from_queue(['CTL1_TRX', '\r\n'])# read and time all in comming data
+    print(reply)
     time_diff = (time.time() - start_time)
     if ex_found != False:
         through_put = ((len(reply) * 8) / time_diff)
@@ -57,6 +62,7 @@ def main():
         print('Throughput = {} Kb/sec'.format((through_put)))
     radio1.multithread_read_shutdown()
     radio2.multithread_read_shutdown()
+    quit()
     ########################################################
 
 
