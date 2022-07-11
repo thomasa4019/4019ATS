@@ -8,7 +8,7 @@ import function_blocks.RL_block_function as fb_rl
 from utilities.modem_rfd import modem_serial
 import utilities.common_utils as common_utils
 import datetime
-import random
+import secrets
 
 '''When writting a new test case:
 
@@ -35,9 +35,9 @@ the output of this function does not include '0x' at the beginning of the hex st
 '''
 def get_random_hex_key(encryption_level):
     if encryption_level == 1:
-        return hex(random.getrandbits(128))[2:]
+        return hex(secrets.randbits(128))[2:]
     elif encryption_level == 2:
-        return hex(random.getrandbits(258))[2:]
+        return hex(secrets.randbits(256))[2:]
     return 0
 
 def main():
