@@ -1,6 +1,6 @@
 import sys
 import pathlib 
-parent_dir = r'{}'.format(pathlib.Path( __file__ ).absolute().__str__().split('4019ATS', 1)[0] + '4019ATS')
+parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
 sys.path.insert(1, parent_dir)
 import function_blocks.IS_block_function as fb_is
 import function_blocks.RL_block_function as fb_rl
@@ -41,7 +41,7 @@ def main():
             status[3] = radio2.init_modem()
             radio1.send_serial_cmd('RT\r\n')
             is_sent_r1_1, reply_1 = radio1.get_data_from_queue('RT\r\nOK\r\n')        # read response from radio 2
-            if reply_1 =='RT\r\nOK\r\n' and is_sent_r1_1 == True:
+            if reply_1 =='RT\r\nOK\r\n' and is_sent_r1_1 > 0:
                 results.append('PASS')
             else:
                 results.append('FAIL')

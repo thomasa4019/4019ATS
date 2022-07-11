@@ -1,6 +1,6 @@
 import sys
 import pathlib
-parent_dir = r'{}'.format(pathlib.Path( __file__ ).absolute().__str__().split('4019ATS', 1)[0] + '4019ATS')
+parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
 sys.path.insert(1, parent_dir)
 import function_blocks.IS_block_function as fb_is
 import function_blocks.RL_block_function as fb_rl
@@ -42,9 +42,9 @@ def main():
         radio1.send_serial_cmd('ATPC=1,{:d}\r\n'.format(i))
         ex_found, reply_1 = radio1.get_data_from_queue('ATPC=1,{:d}\r\nOK\r\n'.format(i))       
         radio1.send_serial_cmd('ATPR=0\r\n')
-        ex_found, reply_1 = radio1.get_data_from_queue(['ATPR=0\r\n', 'val:{:d}\r\n'.format(i)])
+        ex_found, reply_1 = radio1.get_data_from_queue(['val:{:d}\r\n'.format(i)])
         print(ex_found, reply_1)
-        if ex_found == [1, 2]:
+        if ex_found > 0:
             results.append('PASS')
         else:
             results.append('FAIL')

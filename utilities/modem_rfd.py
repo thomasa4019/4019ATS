@@ -1,6 +1,6 @@
 import sys
 import pathlib
-parent_dir = r'{}'.format(pathlib.Path( __file__ ).absolute().__str__().split('4019ATS', 1)[0] + '4019ATS')
+parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
 sys.path.insert(1, parent_dir)
 import serial
 import serial.tools.list_ports
@@ -91,7 +91,7 @@ class modem_serial:
     
     def get_data_from_queue(self, list_ex_response, wait_to_start_max=1):
         return_data = ''
-        ex_found = []
+        ex_found = 0
         list_fifo = []
         if isinstance(list_ex_response, str):
             list_ex_response = [list_ex_response]
@@ -110,24 +110,23 @@ class modem_serial:
             return_data = ''.join(list_fifo)
         for i, ex_response in enumerate(list_ex_response):
             if (ex_response in return_data):
-                ex_found.append(i + 1)
-        if not ex_found:
-            ex_found = False
+                ex_found = (i + 1)
+                break
         return ex_found, return_data
 
     def init_modem(self):
         self.send_serial_cmd('\r\n')
         self.get_data_from_queue('\r\n')
         self.send_serial_cmd('AT\r\n')
-        ex_found, reply = self.get_data_from_queue(['AT\r\n', 'OK\r\n'])
-        if ex_found != False:
+        ex_found, reply = self.get_data_from_queue(['OK\r\n'])
+        if ex_found > 0:
             return True
         else:
             self.send_serial_cmd('\r\n')
             self.get_data_from_queue('\r\n')
             self.send_serial_cmd('+++', True)
             ex_found, reply = self.get_data_from_queue(['OK\r\n', '] OK\r\n'])
-            if ex_found != False:
+            if ex_found > 0:
                 self.send_serial_cmd('\r\n')
                 self.get_data_from_queue('\r\n')
                 return True
@@ -148,8 +147,8 @@ class modem_serial:
         set_cmd = 'ATS{}={}\r\n'.format(self.get_modem_param(param_name)[0], set_value)
         self.send_serial_cmd(set_cmd)
         self.send_serial_cmd('AT&W\r\n')
-        ex_found, response = self.get_data_from_queue([set_cmd, 'AT&W\r\n', 'OK\r\n'])
-        if ex_found == False:
+        ex_found, response = self.get_data_from_queue([set_cmd, 'OK\r\n'])
+        if ex_found <= 0:
             return False
         else: 
             return True
@@ -158,16 +157,17 @@ class modem_serial:
         self.send_serial_cmd('ATZ\r\n')
         ex_found, response = self.get_data_from_queue('\r\n')
         sleep(3)     #For processor loading of 1.75 seconds (sleep orignialy 0.05) #NOTE the modem appears to take more time when sending data in op mode after atz
-        if ex_found == False:
+        if ex_found <= 0:
             return False
         else: 
             return True
 
     def factory_reset(self):
         self.send_serial_cmd('AT&F\r\n')
+        ex_found_1, response = self.get_data_from_queue(['AT&F\r\n, OK\r\n'])
         self.send_serial_cmd('AT&W\r\n')
-        ex_found, response = self.get_data_from_queue(['AT&W', 'AT&F\r\n, OK\r\n'])
-        if ex_found == False:
+        ex_found_2, response = self.get_data_from_queue(['OK\r\n'])
+        if ex_found_1 <= 0 or ex_found_2 <= 0:
             return False
         else: 
             return True

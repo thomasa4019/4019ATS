@@ -1,2 +1,2 @@
-# 4019ATS
+# ATS
 auto test system

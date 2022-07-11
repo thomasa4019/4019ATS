@@ -1,7 +1,7 @@
 from atexit import register
 import sys
 import pathlib
-parent_dir = r'{}'.format(pathlib.Path( __file__ ).absolute().__str__().split('4019ATS', 1)[0] + '4019ATS')
+parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
 sys.path.insert(1, parent_dir)
 import function_blocks.IS_block_function as fb_is
 import function_blocks.RL_block_function as fb_rl

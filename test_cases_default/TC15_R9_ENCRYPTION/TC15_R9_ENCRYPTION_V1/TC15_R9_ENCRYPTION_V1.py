@@ -1,7 +1,7 @@
 import sys
 import pathlib
 from turtle import pos
-parent_dir = r'{}'.format(pathlib.Path( __file__ ).absolute().__str__().split('4019ATS', 1)[0] + '4019ATS')
+parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
 sys.path.insert(1, parent_dir)
 import function_blocks.IS_block_function as fb_is
 import function_blocks.RL_block_function as fb_rl
@@ -64,15 +64,15 @@ def main():
         radio1.init_modem()
         radio2.init_modem()
         radio1.send_serial_cmd('RT\r\n')
-        ex_found_1, reply_1 = radio1.get_data_from_queue(['RT\r\n', 'OK\r\n'])   
+        ex_found_1, reply_1 = radio1.get_data_from_queue(['OK\r\n'])   
         radio2.send_serial_cmd('AT&E={}\r\n'.format(randomHexKey[level])) 
         radio2.send_serial_cmd('AT&W\r\n')
         radio2.get_data_from_queue(['AT&W\r\n','OK\r\n'])
         radio2.reboot_radio()
         radio2.init_modem()
         radio1.send_serial_cmd('RT\r\n')
-        ex_found_2, reply_2 = radio1.get_data_from_queue(['RT\r\n', 'OK\r\n'])    
-        if ex_found_1 != [1, 2] and ex_found_2 == [1, 2]:
+        ex_found_2, reply_2 = radio1.get_data_from_queue(['OK\r\n'])    
+        if ex_found_1 > 0 and ex_found_2 > 0:
             results.append('PASS')
         else:
             results.append('FAIL')

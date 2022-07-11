@@ -1,6 +1,6 @@
 import sys
 import pathlib
-parent_dir = r'{}'.format(pathlib.Path( __file__ ).absolute().__str__().split('4019ATS', 1)[0] + '4019ATS')
+parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
 sys.path.insert(1, parent_dir)
 import function_blocks.IS_block_function as fb_is
 import function_blocks.RL_block_function as fb_rl
@@ -52,12 +52,12 @@ def main():
         for i in range(9):
             radio2.send_serial_cmd('RT\r\n')
             time.sleep(0.5)
-            ex_found, reply = radio2.get_data_from_queue(['RT\r\n', 'OK\r\n'])
+            ex_found, reply = radio2.get_data_from_queue(['OK','ERROR3'])
             print('mid = ', mid_rssi)
             print(ex_found, reply)
-            if reply == 'RT\r\nOK\r\n':
+            if ex_found == 1:
                 count+=1
-            elif reply =='RT\r\nERROR3\r\n' or reply == 'RT\r\n':
+            elif ex_found == 2 or ex_found == 0:
                 count-=1
         if count > 0:
             if (mid_rssi - 1) == min_rssi:
@@ -94,12 +94,12 @@ def main():
         for i in range(9):
             radio1.send_serial_cmd('RT\r\n')
             time.sleep(0.5)
-            ex_found, reply = radio1.get_data_from_queue(['RT\r\n', 'OK\r\n'])
+            ex_found, reply = radio1.get_data_from_queue(['OK','ERROR3'])
             print('mid = ', mid_rssi)
             print(ex_found, reply)
-            if reply == 'RT\r\nOK\r\n':
+            if ex_found == 1:
                 count+=1
-            elif reply =='RT\r\nERROR3\r\n' or reply == 'RT\r\n':
+            elif ex_found ==2 or ex_found == 0:
                 count-=1
         if count > 0:
             if (mid_rssi - 1) == min_rssi:

@@ -1,6 +1,6 @@
 import sys
 import pathlib
-parent_dir = r'{}'.format(pathlib.Path( __file__ ).absolute().__str__().split('4019ATS', 1)[0] + '4019ATS')
+parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
 sys.path.insert(1, parent_dir)
 import function_blocks.IS_block_function as fb_is
 import function_blocks.RL_block_function as fb_rl
@@ -55,7 +55,7 @@ def main():
     ex_found, reply = radio2.get_data_from_queue(['CTL1_TRX', '\r\n'])# read and time all in comming data
     print(reply)
     time_diff = (time.time() - start_time)
-    if ex_found != False:
+    if ex_found > 0:
         through_put = ((len(reply) * 8) / time_diff)
         print('total bytes received ')
         print('runtime = {}'.format(time_diff))
