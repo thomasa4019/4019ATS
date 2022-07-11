@@ -17,7 +17,7 @@ def print_table_to_console():
 # Custom test case for air rate and net id
 def main():
     ##################### INITIALIZATION ###################
-    serial_port_list, main_config_path = fb_is.IS_block()
+    serial_port_list, main_config_path, time_start = fb_is.IS_block()
     ################# write test case here #################
     reg_name = ['Air rate', 'NETID']
     reg_num = [2, 3]
@@ -53,15 +53,15 @@ def main():
     common_utils.close_all_serial(serial_port_list)
     ########################################################
     test_params = [
-        [12000, 12000, 12000, 56000, 56000, 56000],
-        [3, 4, 5, 3, 4, 5]
+        [12000, 12000],
+        [1]
     ]
 
     modem_data_list = [
-        [reg_name[0], reg_num[0], test_params[0]],
-        [reg_name[1], reg_num[1], test_params[1]]
+        [reg_name[0], reg_num[0], [12000, 12000]],
+        [reg_name[1], reg_num[1], [1]]
     ]
-    fb_rl.print_3d_results_to_console(ID, modem_data_list, results)
+    fb_rl.RL_block(ID, modem_data_list, results, time_start)
 
 
 if __name__ == '__main__':
