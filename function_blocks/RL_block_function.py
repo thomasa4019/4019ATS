@@ -1,4 +1,3 @@
-from lib2to3.pygram import python_grammar_no_print_statement
 import pathlib 
 import sys
 parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
@@ -6,49 +5,89 @@ sys.path.insert(1, parent_dir)
 from tabulate import tabulate
 import copy
 import time
+import numpy as np
 
 def total_runtime(time_start):
     time_end = time.time() 
-    print('TOTAL RUNTIME: {}'.format(time_end - time_start ))
+    print('TOTAL RUNTIME: {}'.format(time_end - time_start))
 
-def print_3d_results_to_console(ID, modem_data_list, results):
-    '''print_3d_results_to_console
-
-    Keyword arguments:
-    ID               -- list of IDs, Consists of datetime and station number
-    modem_data_list  -- list containing register name, register number and test parameters for each sub test
-    results          -- list containing PASS of FAIL for each subtest
+def print_to_console(modem_data_list, transpose=False):
     '''
-    print(type(results))
-    print(results)
+    Print result table to console
+    Arguments:
+        modem_data_list:    -- a 2D list with: ID, register name, register number, parameter tested, and results.
+            modem_data_list can be formatted by user in 2 ways:
+            + Option 1: modem_data_list = [
+                ['ID 0', 'sub test name 0', 'register number 0', 'parameter tested 0', 'result 0'],         # row 1
+                [ID[1], name[1], num[1], param[1], results[1]],                                             # row 2
+                [ID[2], name[2], num[2], param[2], results[2]],                                             # row 3
+                ...                                                                                           ... 
+                [ID[-1], name[-1], num[-1], param[-1], results[-1]]
+            ]
+            => where each list element in modem_data_list is a row
+
+            + Option 2: modem_data_list = [
+                ID, name, num, param, results
+            ]
+            => where ID, name, num, param, results are all 1D list with the same length. These represents columns.
+        
+        transpose:          -- ==True (if modem_data_list option 2 is used) to transpose the modem_data_list matrix
+    
+    Output: Example table
+        Test case summary:
+        +----------------+-------------------+-----------+------------------+----------+
+        | ID             | Reg name          | Reg num   | Param            | Result   |
+        +================+===================+===========+==================+==========+
+        | 11/07-16:39:44 | name1             |           | 2500             | PASS     |
+        +----------------+-------------------+-----------+------------------+----------+
+        | 11/07-16:39:45 | name2             |           |                  | PASS     |
+        +----------------+-------------------+-----------+------------------+----------+
+        | 11/07-16:39:46 | name3             | 24        |                  | FAIL     |
+        +----------------+-------------------+-----------+------------------+----------+
+        | 11/07-16:39:47 | ['name4', 'togg'] |           | ['115200', '60'] | PASS     |
+        +----------------+-------------------+-----------+------------------+----------+        
+    '''
+    # TODO: may use dictionary data type instead of list data type for modem_data_. Check for data type ...
     table = []
-    ID = [ID]
-    data_len = len(modem_data_list)
-    param_len = len(modem_data_list[0][2])
-    while param_len < data_len:
-        param_len.append('')
-    print(param_len)
-    for i in range(data_len):
-        ID.extend(modem_data_list[i])
-    temp1 = copy.deepcopy(ID)
-    for i in range(len(results)):
-        for j in range(0, 3*data_len+1, 3):
-            temp1.pop(j)
-            if param_len >= 2:
-                temp1.insert(j, ID[j][i])
-            else:
-                temp1.insert(j, ID[j][i])
-        temp2 = copy.deepcopy(temp1)
-        temp2.append(results[i])
-        table.append(temp2)
-    headers = ['ID']
-    for i in range(data_len):
-        headers.extend(['Reg name', 'Reg num', 'Param'])
-    headers.append('P/F')
+    modem_data_list_temp = copy.deepcopy(modem_data_list)
+    # Check: check length of modem_data_list (shoule be greater than 0)
+    data_len = len(modem_data_list_temp)
+    if (data_len < 1):                              # TODO: may use exception and handler instead of if else statement
+        return print('ERROR: table with no rows') 
+
+    if transpose == False:
+        # Check: check number of elements in a row
+        for i in range(data_len):
+            while (len(modem_data_list_temp[i]) < 5):
+                print('ERROR: not enough elements in row:', i+1)
+                modem_data_list_temp[i].insert(2, '')
+            if (len(modem_data_list_temp[i]) > 5):
+                print('ERROR: more than 5 elements in row:', i+1)
+            
+    elif transpose == True:
+        # Check modem_data_list has 5 column: ID, name, num, param, result. And these columns must have the same number of elements
+        for i in range(len(modem_data_list_temp)):
+            #TODO: Raise an exception here if there is a mismatch in length of columns (or rows)
+            pass
+        if len(modem_data_list_temp) != 5:
+            while (len(modem_data_list_temp) != 5):
+                print('ERROR: missing column')
+                modem_data_list_temp.insert(2, ['' for i in range(len(modem_data_list_temp[0]))])
+        np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning) 
+        modem_data_list_temp = np.transpose(modem_data_list_temp)
+
+    # Create table
+    try:
+        for i in range(len(modem_data_list_temp)):
+            table.append(modem_data_list_temp[i])
+    except:
+        print('ERROR: modem_data_list not in correct format')
+        return
+    headers = ['ID', 'Reg name', 'Reg num', 'Param', 'Result']
     print('\r\nTest case summary:')
     print(tabulate(table, headers, tablefmt="grid"))
-    
-def RL_block(ID, modem_data_list, results, time_start):
-    print_3d_results_to_console(ID, modem_data_list, results)
+
+def RL_block(modem_data_list, time_start, transpose=False):
+    print_to_console(modem_data_list, transpose)
     total_runtime(time_start)
 

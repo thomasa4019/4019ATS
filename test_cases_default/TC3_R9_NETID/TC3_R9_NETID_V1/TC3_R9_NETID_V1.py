@@ -55,11 +55,14 @@ def main():
     common_utils.close_all_serial(serial_port_list)
     ########################################################
 
+    name = ['NETID'] * len(ID)
+    num = [modem_params_dict.get('NETID')[-1]] * len(ID)
+    param = net_id_list 
     modem_data_list = [
-        ['NETID', modem_params_dict.get('NETID')[-1], net_id_list]
+        ID, name, num, param, results
     ]
 
-    fb_rl.RL_block(ID, modem_data_list, results, time_start)
+    fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,8 @@
 import sys
 import pathlib
 from turtle import pos
+
+from numpy import number
 parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
 sys.path.insert(1, parent_dir)
 import function_blocks.IS_block_function as fb_is
@@ -10,65 +12,148 @@ import utilities.common_utils as common_utils
 import datetime
 import random
 
-'''When writting a new test case:
+def set_min_max_freq(radio, minFreq, maxFreq):
+    radio.set_register('MIN_FREQ', minFreq)
+    radio.set_register('MAX_FREQ', maxFreq)
+    radio.reboot_radio()
+    radio.init_modem()
 
--- make sure to add in ID iteratiom for each sub test 
-    (ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S')))
-
--- make sure to fill out the modem_data_list 
-    modem_data_list = [
-        ['SERIAL_SPEED', modem_params_dict.get('SERIAL_SPEED')[-1], baud_rate_list]
-    ]
-    
--- create a results list of PASS or FAIL strings depeding on subtest results
-        if radio1.init_modem() == True:
-            results.append('PASS')
-        else:
-            results.append('FAIL')
-'''
 def main():
     serial_port_list, main_config_path, time_start = fb_is.IS_block()
 
     ################# write test case here #################
-    results, ID = ([] for i in range(2))
+    results, ID, name, param = ([] for i in range(4))
+    numberOfRetry = range(3)
     modem_params_dict = common_utils.def_read_json('Modem_Params', main_config_path)
     standard_params_dict = common_utils.def_read_json('Standard_Params', main_config_path)
     min_freq_list = standard_params_dict.get('MIN_FREQ')
     max_freq_list = standard_params_dict.get('MAX_FREQ')
     radio1 = modem_serial(serial_port_list[0])
     radio2 = modem_serial(serial_port_list[1])
-    for i, j in zip(min_freq_list, max_freq_list):
-        if (i >= j):
-            break
-        radio1.set_register('MIN_FREQ', i)
-        radio1.set_register('MAX_FREQ', j)
-        radio2.set_register('MIN_FREQ', i)
-        radio2.set_register('MAX_FREQ', j)
-        radio1.reboot_radio()
-        radio2.reboot_radio()
-        radio1.init_modem()
-        radio2.init_modem()
+    
+    # Lowband: 23 channels
+    param.append([915000, 921000])
+    set_min_max_freq(radio1, param[-1][0], param[-1][1])
+    set_min_max_freq(radio2, param[-1][0], param[-1][1])
+    for i in numberOfRetry:
         radio1.send_serial_cmd('RT\r\n')
-        ex_found, reply = radio1.get_data_from_queue(['OK\r\n'])
-        print(ex_found, reply)
-        if ex_found > 0:
+        if radio1.get_data_from_queue('OK\r\n')[0] > 0:
             results.append('PASS')
-        else:
+            break
+        if i == numberOfRetry[-1]:
             results.append('FAIL')
-        ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
+    ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
+    name.append('MIN_MAX_FREQ: Lowband 23ch')
+
+    # Lowband: 51 channels
+    param.append([902000, 915000])
+    set_min_max_freq(radio1, param[-1][0], param[-1][1])
+    set_min_max_freq(radio2, param[-1][0], param[-1][1])
+    for i in numberOfRetry:
+        radio1.send_serial_cmd('RT\r\n')
+        if radio1.get_data_from_queue('OK\r\n')[0] > 0:
+            results.append('PASS')
+            break
+        if i == numberOfRetry[-1]:
+            results.append('FAIL')
+    ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
+    name.append('MIN_MAX_FREQ: Lowband 51ch')
+
+    # Highband: 23 channels
+    param.append([922000, 928000])
+    set_min_max_freq(radio1, param[-1][0], param[-1][1])
+    set_min_max_freq(radio2, param[-1][0], param[-1][1])
+    for i in numberOfRetry:
+        radio1.send_serial_cmd('RT\r\n')
+        if radio1.get_data_from_queue('OK\r\n')[0] > 0:
+            results.append('PASS')
+            break
+        if i == numberOfRetry[-1]:
+            results.append('FAIL')
+    ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
+    name.append('MIN_MAX_FREQ: Highband 23ch')
+
+    # Highband: 51 channels
+    param.append([915000, 928000])
+    set_min_max_freq(radio1, param[-1][0], param[-1][1])
+    set_min_max_freq(radio2, param[-1][0], param[-1][1])
+    for i in numberOfRetry:
+        radio1.send_serial_cmd('RT\r\n')
+        if radio1.get_data_from_queue('OK\r\n')[0] > 0:
+            results.append('PASS')
+            break
+        if i == numberOfRetry[-1]:
+            results.append('FAIL')
+    ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
+    name.append('MIN_MAX_FREQ: Highband 51ch')
+
+    # Wholeband: 23 channels
+    param.append([915000, 928000])
+    set_min_max_freq(radio1, param[-1][0], param[-1][1])
+    set_min_max_freq(radio2, param[-1][0], param[-1][1])
+    for i in numberOfRetry:
+        radio1.send_serial_cmd('RT\r\n')
+        if radio1.get_data_from_queue('OK\r\n')[0] > 0:
+            results.append('PASS')
+            break
+        if i == numberOfRetry[-1]:
+            results.append('FAIL')
+    ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
+    name.append('MIN_MAX_FREQ: Wholeband 23ch')
+
+    # Wholeband: 51 channels
+    param.append([902000, 928000])
+    set_min_max_freq(radio1, param[-1][0], param[-1][1])
+    set_min_max_freq(radio2, param[-1][0], param[-1][1])
+    for i in numberOfRetry:
+        radio1.send_serial_cmd('RT\r\n')
+        if radio1.get_data_from_queue('OK\r\n')[0] > 0:
+            results.append('PASS')
+            break
+        if i == numberOfRetry[-1]:
+            results.append('FAIL')
+    ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
+    name.append('MIN_MAX_FREQ: Wholeband 51ch')
+
+    # Single channel low
+    param.append([902000, 902250])
+    set_min_max_freq(radio1, param[-1][0], param[-1][1])
+    set_min_max_freq(radio2, param[-1][0], param[-1][1])
+    for i in numberOfRetry:
+        radio1.send_serial_cmd('RT\r\n')
+        if radio1.get_data_from_queue('OK\r\n')[0] > 0:
+            results.append('PASS')
+            break
+        if i == numberOfRetry[-1]:
+            results.append('FAIL')
+    ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
+    name.append('MIN_MAX_FREQ: Single channel low')
+
+    # Single channel high
+    param.append([927750, 928000])
+    set_min_max_freq(radio1, param[-1][0], param[-1][1])
+    set_min_max_freq(radio2, param[-1][0], param[-1][1])
+    for i in numberOfRetry:
+        radio1.send_serial_cmd('RT\r\n')
+        if radio1.get_data_from_queue('OK\r\n')[0] > 0:
+            results.append('PASS')
+            break
+        if i == numberOfRetry[-1]:
+            results.append('FAIL')
+    ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
+    name.append('MIN_MAX_FREQ: Single channel high')
+
     radio1.multithread_read_shutdown()
     radio2.multithread_read_shutdown()
     common_utils.close_all_serial(serial_port_list)
     ########################################################
+
+    num = [[modem_params_dict.get('MIN_FREQ')[-1], modem_params_dict.get('MAX_FREQ')[-1]]] * len(ID)
     modem_data_list = [
-        ['MIN_FREQ', modem_params_dict.get('MIN_FREQ')[-1], min_freq_list],
-        ['MAX_FREQ', modem_params_dict.get('MAX_FREQ')[-1], max_freq_list]
+        ID, name, num, param, results
     ]
 
-    fb_rl.RL_block(ID, modem_data_list, results, time_start)
+    fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
 if __name__ == '__main__':
     main()
-
-# "MIN_FREQ" : [902000, 902500, 903000, 903500, 904000, 904500, 905000, 905500, 906000, 906500, 907000, 907500, 908000, 908500, 909000, 909500, 910000, 910500, 911000, 911500, 912000, 912500, 913000, 913500, 914000, 914500, 915000, 915500, 916000, 916500, 917000, 917500, 918000, 918500, 919000, 919500, 920000, 920500, 921000, 921500, 922000, 922500, 923000, 923500, 924000, 924500, 925000, 925500, 926000, 926500, 927000],
-# "MAX_FREQ" : [903000, 903500, 904000, 904500, 905000, 905500, 906000, 906500, 907000, 907500, 908000, 908500, 909000, 909500, 910000, 910500, 911000, 911500, 912000, 912500, 913000, 913500, 914000, 914500, 915000, 915500, 916000, 916500, 917000, 917500, 918000, 918500, 919000, 919500, 920000, 920500, 921000, 921500, 922000, 922500, 923000, 923500, 924000, 924500, 925000, 925500, 926000, 926500, 927000, 927500, 928000]

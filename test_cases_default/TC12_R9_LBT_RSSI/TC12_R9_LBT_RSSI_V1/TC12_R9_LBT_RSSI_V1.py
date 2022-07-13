@@ -9,25 +9,14 @@ import utilities.common_utils as common_utils
 import datetime
 import time
 
-'''When writting a new test case:
-
--- make sure to add in ID iteratiom for each sub test 
-    (ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S')))
-
--- make sure to fill out the modem_data_list 
-    modem_data_list = [
-        ['SERIAL_SPEED', modem_params_dict.get('SERIAL_SPEED')[-1], baud_rate_list]
-    ]
-    
--- create a results list of PASS or FAIL strings depeding on subtest results
-        if radio1.init_modem() == True:
-            results.append('PASS')
-        else:
-            results.append('FAIL')
-'''
-
 # LBT RSSI can be set to 0, 25, 26, 27, ..., 220 and must be the same on both radio
 # default = 0, minimum = 25, and max = 220
+
+'''
+    LBT_RSSI test summary:
+        + Check: Modems hardly communicate to each other if LBT_RSSI is set at min (min_rssi = 25)
+        + Check: Modems can easily communicate to each other if LBT_RSSI is set at max (min_rssi = 220)
+'''
 def main():
     serial_port_list, main_config_path, time_start = fb_is.IS_block()
 
@@ -39,111 +28,39 @@ def main():
     lbt_rssi_list = standard_params_dict.get('LBT_RSSI')   #NOTE maybe move into IS block
     radio1 = modem_serial(serial_port_list[0])
     radio2 = modem_serial(serial_port_list[1])
-    max_rssi = 220#lbt_rssi_list[-1]    # = 220
-    min_rssi = lbt_rssi_list[0]     # = 25
-    mid_rssi = int((min_rssi+max_rssi)/2)
-    radio1.set_register('LBT_RSSI', mid_rssi)
-    radio1.reboot_radio()
-    radio1.init_modem()
-    while True:
-        count = 0
-        mid_rssi = int((min_rssi+max_rssi)/2)
-        radio1.set_register('LBT_RSSI', mid_rssi)
-        for i in range(9):
-            radio2.send_serial_cmd('RT\r\n')
-            time.sleep(0.5)
-            ex_found, reply = radio2.get_data_from_queue(['OK','ERROR3'])
-            print('mid = ', mid_rssi)
-            print(ex_found, reply)
-            if ex_found == 1:
-                count+=1
-            elif ex_found == 2 or ex_found == 0:
-                count-=1
-        if count > 0:
-            if (mid_rssi - 1) == min_rssi:
-                break;
-            else:
-                max_rssi = mid_rssi
-                print('Comm. pass, decrease RSSI')
-        elif count < 0:
-                min_rssi = mid_rssi
-                print('Comm. fail, increase RSSI')
+    max_rssi = 220
+    min_rssi = 25
+    param = [min_rssi, max_rssi]
+    for i, value in enumerate(param):
+        radio1.set_register('LBT_RSSI', value)
+        radio2.set_register('LBT_RSSI', value)
+        radio1.reboot_radio()
+        radio2.reboot_radio()
+        radio1.init_modem()
+        radio2.init_modem()
+        radio1.send_serial_cmd('RT\r\n')
+        ex_found, reply = radio1.get_data_from_queue('OK\r\n')
+        print(ex_found)
+        if value == min_rssi:
+            results.append('PASS') if ex_found == 0 else results.append('FAIL')     # Unable to communicate at min
         else:
-            pass
-        if min_rssi+1 == max_rssi:
-            mid_rssi+=1
-            break
-        print(f'Range {min_rssi}:{max_rssi}, mid = {mid_rssi}')
-    ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
-    print('Target LBT_RSSI above noise floor:', mid_rssi)
-    results.append(mid_rssi)
-
-    max_rssi = 220#lbt_rssi_list[-1]    # = 220
-    min_rssi = lbt_rssi_list[0]     # = 25
-    mid_rssi = int((min_rssi+max_rssi)/2)
-    radio2.set_register('LBT_RSSI', mid_rssi)
-    radio2.reboot_radio()
-    radio2.init_modem()
-    radio1.set_register('LBT_RSSI', 0)
-    radio1.reboot_radio()
-    radio1.init_modem()
-    while True:
-        count = 0
-        mid_rssi = int((min_rssi+max_rssi)/2)
-        radio2.set_register('LBT_RSSI', mid_rssi)
-        for i in range(9):
-            radio1.send_serial_cmd('RT\r\n')
-            time.sleep(0.5)
-            ex_found, reply = radio1.get_data_from_queue(['OK','ERROR3'])
-            print('mid = ', mid_rssi)
-            print(ex_found, reply)
-            if ex_found == 1:
-                count+=1
-            elif ex_found ==2 or ex_found == 0:
-                count-=1
-        if count > 0:
-            if (mid_rssi - 1) == min_rssi:
-                break;
-            else:
-                max_rssi = mid_rssi
-                print('Comm. pass, decrease RSSI')
-        elif count < 0:
-                min_rssi = mid_rssi
-                print('Comm. fail, increase RSSI')
-        else:
-            pass
-        if min_rssi+1 == max_rssi:
-            mid_rssi+=1
-            break
-        print(f'Range {min_rssi}:{max_rssi}, mid = {mid_rssi}')
-    ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
-    print('Target LBT_RSSI above noise floor:', mid_rssi)
-    results.append(mid_rssi)
+            results.append('PASS') if ex_found > 0 else results.append('FAIL')      # Able to communicate at max
+        ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
 
     radio1.multithread_read_shutdown()
     radio2.multithread_read_shutdown()
     common_utils.close_all_serial(serial_port_list)
     ########################################################
+
+    name = ['LBT_RSSI' for i in range(len(results))]
+    num = [modem_params_dict.get('LBT_RSSI')[-1] for i in range(len(results))]
     modem_data_list = [
-        ['LBT_RSSI', modem_params_dict.get('LBT_RSSI')[-1], ['','']]
+        ID, name, num, param, results
     ]
 
-    fb_rl.RL_block(ID, modem_data_list, results, time_start)
+    fb_rl.RL_block(modem_data_list, time_start, transpose=True)
     
 
 
 if __name__ == '__main__':
     main()
-
-    #         if reply == 'RT\r\nOK\r\n':
-    #             if (mid_rssi - 1) == min_rssi:
-    #                 break;
-    #             else:
-    #                 max_rssi = mid_rssi
-    #                 print('Comm. pass, decrease RSSI')
-    #         else:
-    #             if reply =='RT\r\nERROR3\r\n':
-    #                 min_rssi = mid_rssi
-    #                 print('Comm. fail, increase RSSI')
-    #             else:
-    #                 pass

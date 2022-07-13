@@ -145,23 +145,15 @@ def main():
     LocRadio.multithread_read_shutdown()
     RemRadio.multithread_read_shutdown()
     common_utils.close_all_serial(serial_port_list)
+
     ########################################################
-
+    test_name = ['GPIO0->1', 'GPIO1->0', 'GPIO2->3', 'GPIO3->2', 'GPIOADC45->2', 'GPIOADC45->3', 'GPIO2->345', 'GPIO3->245', 'GPIO4->235', 'GPIO5->234', 'GPIO2->3-->REM3->2']
+    num = ['' for i in range(len(results))]
+    param = ['' for i in range(len(results))]
     modem_data_list = [
-        ['GPIO0->1'    ,0,[0,0,0,0,0,0,0,0,0,0,0]],     # TODO this needs to be fixed in RL_Block, so not so many items and formatted better
-        ['GPIO1->0'    ,0,[0,0,0,0,0,0,0,0,0,0,0]],
-        ['GPIO2->3'    ,0,[0,0,0,0,0,0,0,0,0,0,0]],
-        ['GPIO3->2'    ,0,[0,0,0,0,0,0,0,0,0,0,0]],
-        ['GPIOADC45->2',0,[0,0,0,0,0,0,0,0,0,0,0]],
-        ['GPIOADC45->3',0,[0,0,0,0,0,0,0,0,0,0,0]],
-        ['GPIO2->345'  ,0,[0,0,0,0,0,0,0,0,0,0,0]],
-        ['GPIO3->245'  ,0,[0,0,0,0,0,0,0,0,0,0,0]],
-        ['GPIO4->235'  ,0,[0,0,0,0,0,0,0,0,0,0,0]],
-        ['GPIO5->234'  ,0,[0,0,0,0,0,0,0,0,0,0,0]],
-        ['GPIO2->3-->REM3->2'  ,0,[0,0,0,0,0,0,0,0,0,0,0]],        
+      ID, test_name, num, param, results
     ]
-
-    fb_rl.RL_block(ID, modem_data_list, results, time_start)
+    fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
 
 if __name__ == '__main__':

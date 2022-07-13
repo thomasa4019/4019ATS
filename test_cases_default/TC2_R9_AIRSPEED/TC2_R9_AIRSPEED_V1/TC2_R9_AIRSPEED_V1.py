@@ -55,11 +55,14 @@ def main():
     common_utils.close_all_serial(serial_port_list)
     ########################################################
 
+    name = ['AIR_SPEED'] * len(ID)
+    num = [modem_params_dict.get('AIR_SPEED')[-1]] * len(ID)
+    param = air_rate_list 
     modem_data_list = [
-        ['AIR_SPEED', modem_params_dict.get('AIR_SPEED')[-1], air_rate_list]
+        ID, name, num, param, results
     ]
 
-    fb_rl.RL_block(ID, modem_data_list, results, time_start)
+    fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
 
 if __name__ == '__main__':
