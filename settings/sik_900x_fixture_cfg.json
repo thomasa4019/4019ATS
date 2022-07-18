@@ -1,0 +1,4 @@
+{
+    "DUT_1_2_COMPORT": ["COM3", "COM9"],
+    "DUT_1_2_SBUS_COMPORT": ["COM?", "COM?"]
+}

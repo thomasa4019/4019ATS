@@ -28,7 +28,7 @@ import datetime
 '''
 
 def main():
-    serial_port_list, main_config_path, time_start = fb_is.IS_block()
+    serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
     results, ID = ([] for i in range(2)) # results and id pre defined
 
     ################# write test case here #################

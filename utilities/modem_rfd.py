@@ -8,6 +8,7 @@ from time import sleep, time
 import threading, multiprocessing
 import utilities.common_utils as common_utils
 import os
+import function_blocks.IS_block_function as fb_is
 
 
 
@@ -138,7 +139,8 @@ class modem_serial:
         self.p1.join()
 
     def get_modem_param(self, key):
-        dict_main_data = common_utils.def_read_json('Modem_Params', parent_dir + '\settings\main_config.json')
+        param_config_path, fixture_config_path = fb_is.get_config_path()
+        dict_main_data = common_utils.def_read_json('Modem_Params', param_config_path)  
         reg_num = dict_main_data.get(key)[-1]
         val = dict_main_data.get(key)[0]
         return reg_num, val

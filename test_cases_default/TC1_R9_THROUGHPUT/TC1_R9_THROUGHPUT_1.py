@@ -31,7 +31,7 @@ from os import walk
 '''
 
 def main():
-    serial_port_list, main_config_path, time_start = fb_is.IS_block()
+    serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
 
     ################# write test case here #################
     file_dir_list = []

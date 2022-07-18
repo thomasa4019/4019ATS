@@ -26,8 +26,8 @@ import datetime
 '''
 
 def main():
-    serial_port_list, main_config_path, time_start = fb_is.IS_block()
-
+    serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
+    
     ################# write test case here #################
     results, ID = ([] for i in range(2))
     modem_params_dict = common_utils.def_read_json('Modem_Params', main_config_path)
