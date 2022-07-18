@@ -17,7 +17,7 @@ def print_table_to_console():
 # Custom test case for air rate and net id
 def main():
     ##################### INITIALIZATION ###################
-    serial_port_list, main_config_path, time_start = fb_is.IS_block()
+    serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
     ################# write test case here #################
     reg_name = ['Air rate', 'NETID']
     reg_num = [2, 3]

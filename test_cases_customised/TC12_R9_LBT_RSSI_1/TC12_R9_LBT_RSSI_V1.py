@@ -29,7 +29,7 @@ import time
 # LBT RSSI can be set to 0, 25, 26, 27, ..., 220 and must be the same on both radio
 # default = 0, minimum = 25, and max = 220
 def main():
-    serial_port_list, main_config_path, time_start = fb_is.IS_block()
+    serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
 
     ################# write test case here #################
     results, ID = ([] for i in range(2))
