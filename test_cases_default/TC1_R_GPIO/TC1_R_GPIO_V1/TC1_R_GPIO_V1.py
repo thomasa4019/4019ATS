@@ -86,17 +86,11 @@ def testGPIO(Radio,OutPutList,InputList,OutputVal,InputVal):
   return(Pass)
 
 def main():
-    serial_port_list, main_config_path, time_start = fb_is.IS_block()
+    serial_port_list, main_config_path, time_start,fixture_path = fb_is.IS_block()
     results, ID = ([] for i in range(2)) # results and id pre defined
     ################# gpio + adc test case #################
-    Radio1 = modem_serial(serial_port_list[0])
-    Radio2 = modem_serial(serial_port_list[1])
-    if(Radio1.serial_port.port == 'COM56'):# TODO dirty hack we need a test fixture config file
-        LocRadio = Radio1
-        RemRadio = Radio2
-    else :
-        LocRadio = Radio2
-        RemRadio = Radio1
+    LocRadio = modem_serial(serial_port_list[0])                  # serial will arrange in order of DUT's for us, DUT 1 is GPIO test
+    RemRadio = modem_serial(serial_port_list[1])
     print('Local Radio '+LocRadio.serial_port.port)               # find the local and remote radio, local has gpio tets remote has mirror test
     print('Remote Radio '+RemRadio.serial_port.port)
     # run the desired test cases

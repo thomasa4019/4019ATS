@@ -3,6 +3,7 @@ import serial.tools.list_ports
 import json
 import utilities.modem_rfd as modem_rfd
 import pathlib
+import function_blocks.IS_block_function as fb_is
 
 
 class NotEnoughRadioError(Exception):
@@ -40,9 +41,15 @@ def generate_lookup_data(serial_port_list):
 def disconect_reconnect_radios(current_baud, config_path, json_section='disconnect_reconnect_data'):
     serial_port_list, connected, serial_port_tmp = ([] for i in range(3))
     comlist = serial.tools.list_ports.comports()
+    param_path,fixture_path = fb_is.get_config_path()
+    DUT_com_ports = def_read_json('DUT_1_2_COMPORT',fixture_path)
     baud_rates = def_read_json(json_section, config_path).get('baud_rates')
-    for element in comlist:
-        connected.append(element.device)
+    for port in DUT_com_ports:
+        for element in comlist: 
+            if port == element.device:
+                connected.append(element.device)
+    if(len(connected) != 2):
+        print( " ERROR: NOT ALL COM Ports Found in fixture config " + fixture_path + ' Please ensure settings match your fixtue')
     print(connected)
     for i in range(len(connected)):
         try:
