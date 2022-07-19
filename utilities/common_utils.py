@@ -1,3 +1,7 @@
+import sys
+import pathlib
+parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
+sys.path.insert(1, parent_dir)
 import serial
 import serial.tools.list_ports
 import json
@@ -24,6 +28,21 @@ def def_read_json(json_section, config_path):
         return dictionary_out
 
         # TODO
+
+'''
+    Navigate and return directory paths for 'sik_900x_param_cfg.json' and 'sik_900x_fixture_cfg.json' (File names can be subjected to change)
+    Input  -- None
+    Output -- 2 values in order below:
+        + Configuration path for parameters/registers: 'sik_900x_param_cfg.json'
+        + Configuration path for fixture: 'sik_900x_fixture_cfg.json'
+'''
+def get_config_path():
+    test_config_path = parent_dir + r'\settings\curr_test_config.json'
+    param_config_path = def_read_json('param_cfg_path_name', test_config_path)
+    fixture_config_path = def_read_json('fixture_cfg_path_name', test_config_path)
+    return parent_dir + param_config_path, parent_dir + fixture_config_path
+
+
 def generate_lookup_data(serial_port_list):
     register_params, param_values = ([] for i in range(2))
     radio1 = modem_rfd.modem_serial(serial_port_list[0])
@@ -41,8 +60,8 @@ def generate_lookup_data(serial_port_list):
 def disconect_reconnect_radios(current_baud, config_path, json_section='disconnect_reconnect_data'):
     serial_port_list, connected, serial_port_tmp = ([] for i in range(3))
     comlist = serial.tools.list_ports.comports()
-    param_path,fixture_path = fb_is.get_config_path()
-    DUT_com_ports = def_read_json('DUT_1_2_COMPORT',fixture_path)
+    param_path, fixture_path = get_config_path()
+    DUT_com_ports = def_read_json('DUT_1_2_COMPORT', fixture_path)
     baud_rates = def_read_json(json_section, config_path).get('baud_rates')
     for port in DUT_com_ports:
         for element in comlist: 
@@ -81,14 +100,14 @@ def disconect_reconnect_radios(current_baud, config_path, json_section='disconne
     return serial_port_list
     
 
-def factory_reset_all_radios(serial_port_list, config_path):
+def factory_reset_all_radios(serial_port_list, config_path, customised_reset=False):
     if len(serial_port_list) < 1:
         raise NotEnoughRadioError('Cannot reset radio(s). Please connect radio(s), or try power cycling radio(s)')
     else:
         for i in range(len(serial_port_list)):
             radio = modem_rfd.modem_serial(serial_port_list[i])
             radio.init_modem()
-            radio.factory_reset()
+            radio.factory_reset() if customised_reset==False else radio.customised_reset()
             radio.reboot_radio()
             radio.multithread_read_shutdown() 
         close_all_serial(serial_port_list)

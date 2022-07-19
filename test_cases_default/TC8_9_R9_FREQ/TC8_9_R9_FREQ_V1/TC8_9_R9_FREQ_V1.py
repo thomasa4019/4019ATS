@@ -18,7 +18,7 @@ def set_min_max_freq(radio, minFreq, maxFreq):
     radio.reboot_radio()
     radio.init_modem()
 
-def main():
+def MIN_MAX_FREQ_test():
     serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
 
     ################# write test case here #################
@@ -153,7 +153,10 @@ def main():
         ID, name, num, param, results
     ]
 
-    fb_rl.RL_block(modem_data_list, time_start, transpose=True)
+    return fb_rl.RL_block(modem_data_list, time_start, transpose=True)
+
+def main():
+    MIN_MAX_FREQ_test()
 
 if __name__ == '__main__':
     main()

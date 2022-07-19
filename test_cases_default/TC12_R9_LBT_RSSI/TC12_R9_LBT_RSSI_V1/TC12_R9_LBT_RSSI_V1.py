@@ -17,7 +17,7 @@ import time
         + Check: Modems hardly communicate to each other if LBT_RSSI is set at min (min_rssi = 25)
         + Check: Modems can easily communicate to each other if LBT_RSSI is set at max (min_rssi = 220)
 '''
-def main():
+def LBT_RSSI_test():
     serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
 
     ################# write test case here #################
@@ -38,9 +38,7 @@ def main():
         radio2.reboot_radio()
         radio1.init_modem()
         radio2.init_modem()
-        radio1.send_serial_cmd('RT\r\n')
-        ex_found, reply = radio1.get_data_from_queue('OK\r\n')
-        print(ex_found)
+        ex_found, reply = radio1.retry_RT_echo(3)                  # If 'OK\r\n' is not found from sending 'RT\r\n', retry up to 3 times  
         if value == min_rssi:
             results.append('PASS') if ex_found == 0 else results.append('FAIL')     # Unable to communicate at min
         else:
@@ -58,9 +56,10 @@ def main():
         ID, name, num, param, results
     ]
 
-    fb_rl.RL_block(modem_data_list, time_start, transpose=True)
+    return fb_rl.RL_block(modem_data_list, time_start, transpose=True, printToConsole=False)
     
-
+def main():
+    LBT_RSSI_test()
 
 if __name__ == '__main__':
     main()

@@ -1,2 +1,0 @@
-This folder is to hold a default test case, but with a modified json file.
-This folder could also hold a completely custom user defined test.

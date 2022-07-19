@@ -5,13 +5,13 @@
 
     "Standard_Params": {
         "SERIAL_SPEED" : [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 1200000, 3000000],
-        "AIR_SPEED" : [12000, 56000, 64000, 100000, 125000],
+        "AIR_SPEED" : [12000, 56000, 64000],
         "NETID" : [0, 150],
         "ENCRYPTION_LEVEL" : [1, 2],
         "MIN_FREQ" : [902000, 902500, 903000, 903500, 904000, 904500, 905000, 905500, 906000, 906500, 907000, 907500, 908000, 908500, 909000, 909500, 910000],
         "MAX_FREQ" : [903000, 903500, 904000, 904500, 905000, 905500, 906000, 906500, 907000, 907500, 908000, 908500, 909000, 909500, 910000],
         "LBT_RSSI" : [25, 220],
-        "DUTY_CYCLE" : [10, 50, 100],
+        "DUTY_CYCLE" : [10, 50, 90],
         "NUM_CHANNELS" : [1, 25, 51]
     },
 
@@ -44,9 +44,41 @@
         "RATE/FREQBAND" : [[0, 1], 23],
         "GPI1_2AUXIN" : [[0, 1], 24],
         "GPO1_3AUXOUT" : [[0, 1], 25],
-        "AIR_FRAMELEN" : [["N/A"], 26],
+        "AIR_FRAMELEN" : [[120, 4000], 26],
         "RSSI_IN_DBM" : [[0, 1], 27],
         "FSFRAMELOSS" : [["N/A"], 28], 
         "AUXSER_SPEED" : [[9, 19, 38, 57, 115, 230, 460, 1200], 29]
+    },
+
+    "Customised_Factory_Reset": {
+        "SERIAL_SPEED" : [57, 1],
+        "AIR_SPEED" : [64, 2],
+        "NETID" : [25 , 3],
+        "TXPOWER" : [30, 4],
+        "ECC" : [0, 5],
+        "MAVLINK" : [1, 6],
+        "OPPRESEND" : [0, 7],
+        "MIN_FREQ" : [908000, 8],
+        "MAX_FREQ" : [915000, 9],
+        "NUM_CHANNELS" : [21, 10],
+        "DUTY_CYCLE" : [100, 11],
+        "LBT_RSSI" : [0, 12],
+        "RTSCTS" : [0, 13],
+        "MAX_WINDOW" : [131, 14],
+        "ENCRYPTION_LEVEL" : [0, 15],
+        "GPI1_1R/CIN" : [0, 16],
+        "GPO1_1R/COUT" : [0, 17],
+        "GPO1_1SBUSIN" : [0, 18],
+        "GPO1_1SBUSOUT" : [0, 19],
+        "ANT_MODE" : [0, 20],
+        "GPO1_3STATLED" : [0, 21],
+        "GPO1_0TXEN485" : [0, 22],
+        "RATE/FREQBAND" : [0, 23],
+        "GPI1_2AUXIN" : [0, 24],
+        "GPO1_3AUXOUT" : [0, 25],
+        "AIR_FRAMELEN" : [120, 26],
+        "RSSI_IN_DBM" : [0, 27],
+        "FSFRAMELOSS" : [50, 28], 
+        "AUXSER_SPEED" : [57, 29]
     }
 }

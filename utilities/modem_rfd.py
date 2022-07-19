@@ -139,7 +139,7 @@ class modem_serial:
         self.p1.join()
 
     def get_modem_param(self, key):
-        param_config_path, fixture_config_path = fb_is.get_config_path()
+        param_config_path, fixture_config_path = common_utils.get_config_path()
         dict_main_data = common_utils.def_read_json('Modem_Params', param_config_path)  
         reg_num = dict_main_data.get(key)[-1]
         val = dict_main_data.get(key)[0]
@@ -174,7 +174,37 @@ class modem_serial:
         else: 
             return True
 
+    '''
+        This function sets modem registers' values based on values written in "Customised_Factory_Reset" dictionary 
+        in 'sik_900x_param_cfg.json' param config file
+
+        This function is only used in 'factory_reset_all_radios(serial_port_list, config_path, customised_reset=False)' function
+        located in 'common_utils.py'
+    '''
+    def customised_reset(self):
+        param_config_path, fixture_config_path = common_utils.get_config_path()
+        customised_config_dict = common_utils.def_read_json('Customised_Factory_Reset', param_config_path)
+        for i, value in enumerate(customised_config_dict):
+            self.set_register(value, customised_config_dict[value][0])
+
 
     def power_cycle_radio():
         pass
-
+    
+    '''
+        This function is used as a replacement to 'send_serial_cmd()' & 'get_data_from_queue()' in test cases as a way to reattempt
+        to get an 'OK\r\n' response from sending 'RT\r\n'
+        This function is useful when 'RT' cmd does not return a response in the 1st attempt for some reasons.
+        Input:
+            + numOfRetry: number of attempts to send 'RT\r\n' and receive a response
+        Output -- 2 values in order below:
+            + ex_found: either 1 or 0. 1 means 'OK\r\n' is received & 0 means 'OK\r\n' is not received
+            + reply: actual string being received from the remote modem after an 'RT\r\n' has been sent from the local modem
+    '''
+    def retry_RT_echo(self, numOfRetry):
+        for retry in range(numOfRetry):                      # If no response found from sending 'RT', retry up to 3 times  
+            self.send_serial_cmd('RT\r\n')
+            ex_found, reply = self.get_data_from_queue('OK\r\n')
+            if ex_found > 0:
+                break
+        return ex_found, reply

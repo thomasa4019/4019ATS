@@ -1,42 +1,52 @@
-import chunk
-from email import message
-from pickle import FALSE
-from urllib import response
-import serial
-import serial.tools.list_ports
-from time import sleep, time
-from configparser import ConfigParser
-from ast import Break, Return, literal_eval as litev
-import pandas as pd
-from tabulate import tabulate as tb
-import threading, multiprocessing
 import sys
-import json
-from utilities import common_utils
 import pathlib
+parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
+sys.path.insert(1, parent_dir)
+from utilities.modem_rfd import modem_serial
+import utilities.common_utils as common_utils
+import function_blocks.IS_block_function as fb_is
+import time
+from tabulate import tabulate
+import test_case_imports as tc
+
 
 
 def main():
-    main_config_path = str(pathlib.Path(__file__).parent.resolve())
-    main_config_path += '\settings\main_config.json'
+    start_time = time.time()
+    results = []
+    ##########################################################################
+    # results.extend(tc.AIRSPEED_test())
+    results.extend(tc.LBT_RSSI_test())
+    results.extend(tc.NETID_test())
+    results.extend(tc.ENCRYPTION_LEVEL_test())
+
+    headers = ['ID', 'Reg name', 'Reg num', 'Param', 'Result']
+    table = tabulate(results, headers, tablefmt="grid")
+    print(table)
+    with open('test_results.txt', 'w') as f:
+        f.write(table)
+
+    ##########################################################################
+    run_time = time.time()-start_time
+    print('total run time:', run_time)
+
+def test_new_config_json():
+    start_time = time.time()
+    ##########################################################################
+    param_config_path, fixture_config_path = fb_is.get_config_path()
     json_section = 'disconnect_reconnect_data'
-    serial_port_list = common_utils.disconect_reconnect_radios(57600, main_config_path, json_section)
+    serial_port_list = common_utils.disconect_reconnect_radios(57600, param_config_path, json_section)
+    customised_config_dict = common_utils.def_read_json('Customised_Factory_Reset', param_config_path)
+    radio1 = modem_serial(serial_port_list[0])
+    for i, value in enumerate(customised_config_dict):
+        radio1.set_register(value, customised_config_dict[value][0])
+    radio1.reboot_radio()
+    radio1.multithread_read_shutdown()
     common_utils.close_all_serial(serial_port_list)
-
-    #test_id_list = ['TC1-R9-UART.2', 'TC2-R9-AIRSPEED.1']
-    #serial_port_list = disconect_reconnect_radios(57600, CONFIG_PATH)
-    #serial_port_list = factory_reset_all_radios
-    #close_all_serial(serial_port_list)
-    #quit()
-    #serial_port_list = disconect_reconnect_radios(57600, CONFIG_PATH)
-    #serial_port_list = factory_reset_all_radios(serial_port_list)
-    #-------TEST--------
-    #serial_port_list = br_test.TC1_R9_UART_2(serial_port_list)
-    #serial_port_list = ar_test.TC2_R9_AIRSPEED_1(serial_port_list)
-    #create_table_export_csv(test_id_list)
-
-    
-    
+    ##########################################################################
+    run_time = time.time()-start_time
+    print('total run time:', run_time)
 
 if __name__ == '__main__':
     main()
+    #test_new_config_json()
