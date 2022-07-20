@@ -166,14 +166,11 @@ def PrevVal(val):
   prevval = (2047 if val <= 0 else val-1)
   return prevval 
 
-badtest = 0
 def IsOrderBad(val,lastval):
-  global badtest
-  badtest += 1
   if(PrevVal(val) == lastval):
     return False
   if(val < lastval and lastval < 2043): # if less and last val is a number away from the end of list
-    #print ('BAD:'+str(val)+' last:'+str(lastval) +'test '+str(badtest))
+    #print ('BAD:'+str(val)+' last:'+str(lastval) +'test ')
     return True   
   return False
 
