@@ -173,7 +173,7 @@ def IsOrderBad(val,lastval):
   if(PrevVal(val) == lastval):
     return False
   if(val < lastval and lastval < 2043): # if less and last val is a number away from the end of list
-    print ('BAD:'+str(val)+' last:'+str(lastval) +'test '+str(badtest))
+    #print ('BAD:'+str(val)+' last:'+str(lastval) +'test '+str(badtest))
     return True   
   return False
 
@@ -228,41 +228,35 @@ def TestSBUS(InpSer,OutSer,SBUS,frames=200,outputInt=0.02):
 def main():
   serial_port_list, main_config_path, time_start, fixture_cfg = fb_is.IS_block()
   results, ID = ([] for i in range(2)) # results and id pre defined
-  ################# gpio + adc test case #################
+  ################# SBUS serial  test case #################
   Radio1 = modem_serial(serial_port_list[0])
   Radio2 = modem_serial(serial_port_list[1])
-  # TODO we may want to test 200K rate with 10% duty cycle as well
   SBUS_com_ports = common_utils.def_read_json('DUT_1_2_SBUS_COMPORT',fixture_cfg)
   SerBUS1 = SerialIntf()
-  SerBUS1.start(SBUS_com_ports[0])                                            #TODO we need to use a 2nd port for sbus testing future
-  SerBUS2 = SerBUS1                                                           # for now just copy the handle
+  SerBUS1.start(SBUS_com_ports[0])                                            #sbus serial port DUT1
+  SerBUS2 = SerialIntf()                                                      
+  SerBUS2.start(SBUS_com_ports[1])                                            #sbus serial port DUT2
   SBUS = SBus()                                                               # tools for handling SBUs data format
-  # try:
-  Tests = [[125000,100],[200000,10]]
+  Tests = [[64000,100],[125000,100],[200000,10]]
+  tests_name= ['MinLat', 'MaxLat', 'AvLat','ValidPkts','OutOrder','RxPkts']
+  test_name = []
   for t in Tests:
     SetupSBUS(Radio2,Radio1,t[0],t[1])                                         # the SBUS output is on the GPIO test side
     Min_Max_Av_Valid_Order_Rx = TestSBUS(SerBUS2,SerBUS1,SBUS)
-    for i in Min_Max_Av_Valid_Order_Rx :
-      results.append(i)  
+    for i in range(len(Min_Max_Av_Valid_Order_Rx)):
+      test_name.append('SBUS_'+str(int(t[0]/1000))+'K_'+str(t[1])+'%_'+tests_name[i])
+      results.append(Min_Max_Av_Valid_Order_Rx[i])  
       ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
-  # except (RuntimeError, TypeError, NameError,OSError,ZeroDivisionError):
   Radio1.multithread_read_shutdown()
   Radio2.multithread_read_shutdown()
   SerBUS1.stop()
   if(SerBUS1 != SerBUS2):
     SerBUS2.stop()
   common_utils.close_all_serial(serial_port_list)
-
   ########################################################
-  test_name = [
-    'SBUS_125K_MinLat', 'SBUS_125K_MaxLat', 'SBUS_125K_AvLat','SBUS_125K_ValidPkts','SBUS_125K_OutOrder','SBUS_125K_RxPkts',
-    'SBUS_200K10_MinLat', 'SBUS_200K10_MaxLat', 'SBUS_200K10_AvLat','SBUS_200K10_ValidPkts','SBUS_200K10_OutOrder','SBUS_200K10_RxPkts',
-    ]#TODO add 200K test
   num = ['' for i in range(len(results))]
   param = ['' for i in range(len(results))]
-  modem_data_list = [
-    ID, test_name, num, param, results
-  ]
+  modem_data_list = [ID, test_name, num, param, results]
   fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
 
