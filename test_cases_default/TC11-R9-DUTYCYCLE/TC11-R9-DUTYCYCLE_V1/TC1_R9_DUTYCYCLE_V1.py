@@ -53,7 +53,7 @@ def main():
         radio1.set_register('DUTY_CYCLE', duty_cycle)
         radio1.reboot_radio()
         start_time = time.time()
-        radio1.send_file_serial(file_dir_list[9]) #512k file send
+        radio1.send_file_serial(file_dir_list[2]) #512k file send
         ex_found, reply = radio2.get_data_from_queue(['CTL1_TRX', '\r\n']) #only read for 10 sec
         time_diff = (time.time() - start_time)
         if ex_found > 0:

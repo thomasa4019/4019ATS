@@ -25,7 +25,7 @@ import datetime
             results.append('FAIL')
 '''
 
-def main():
+def NETID_test():
     serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
     
     ################# write test case here #################
@@ -37,14 +37,14 @@ def main():
     radio1 = modem_serial(serial_port_list[0])
     radio2 = modem_serial(serial_port_list[1])
     for i, net_id in enumerate(net_id_list):
-        radio1.set_register('NETID', net_id_param_list[i])   
-        radio2.set_register('NETID', net_id_param_list[i])  
+        radio1.set_register('NETID', net_id)   
+        radio2.set_register('NETID', net_id)  
         radio1.reboot_radio()
         radio2.reboot_radio()
         radio1.init_modem()    
         radio2.init_modem()    
         radio1.send_serial_cmd('RT\r\n')
-        ex_found, reply_1 = radio1.get_data_from_queue('OK\r\n')
+        ex_found, reply = radio1.retry_RT_echo(3)
         if ex_found > 0:
             results.append('PASS')
         else:
@@ -62,8 +62,10 @@ def main():
         ID, name, num, param, results
     ]
 
-    fb_rl.RL_block(modem_data_list, time_start, transpose=True)
+    return fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
+def main():
+    NETID_test()
 
 if __name__ == '__main__':
     main()

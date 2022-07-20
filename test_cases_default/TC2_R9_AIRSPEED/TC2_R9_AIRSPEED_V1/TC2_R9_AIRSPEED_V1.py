@@ -25,7 +25,7 @@ import datetime
             results.append('FAIL')
 '''
 
-def main():
+def AIRSPEED_test():
     serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
 
     ################# write test case here #################
@@ -44,7 +44,7 @@ def main():
         radio1.init_modem()
         radio2.init_modem()
         radio1.send_serial_cmd('RT\r\n')
-        ex_found, reply_1 = radio1.get_data_from_queue(['OK\r\n'])    
+        ex_found, reply = radio1.get_data_from_queue(['OK\r\n'])    
         if ex_found <= 0:
             results.append('FAIL')
         else:
@@ -62,8 +62,10 @@ def main():
         ID, name, num, param, results
     ]
 
-    fb_rl.RL_block(modem_data_list, time_start, transpose=True)
+    return fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
+def main():
+    AIRSPEED_test()
 
 if __name__ == '__main__':
     main()

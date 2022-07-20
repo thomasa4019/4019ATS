@@ -11,7 +11,7 @@ def total_runtime(time_start):
     time_end = time.time() 
     print('TOTAL RUNTIME: {}'.format(time_end - time_start))
 
-def print_to_console(modem_data_list, transpose=False):
+def print_to_console(modem_data_list, transpose=False, printToConsole=True):
     '''
     Print result table to console
     Arguments:
@@ -84,10 +84,14 @@ def print_to_console(modem_data_list, transpose=False):
         print('ERROR: modem_data_list not in correct format')
         return
     headers = ['ID', 'Reg name', 'Reg num', 'Param', 'Result']
-    print('\r\nTest case summary:')
-    print(tabulate(table, headers, tablefmt="grid"))
+    if printToConsole:
+        print('\r\nTest case summary:')
+        print(tabulate(table, headers, tablefmt="grid"))
+    return table
 
-def RL_block(modem_data_list, time_start, transpose=False):
-    print_to_console(modem_data_list, transpose)
+def RL_block(modem_data_list, time_start, transpose=False, printToConsole=True):
+    table = print_to_console(modem_data_list, transpose, printToConsole)
     total_runtime(time_start)
+    return table
+    
 
