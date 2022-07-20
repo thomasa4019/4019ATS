@@ -20,7 +20,7 @@ def Read_Data(queue, serial_port, stopped, read_line_mode=False):
     stopped         -- multithread event used to flag and stop the fifos process in case of errors
     read_line_mode  -- If set to True, Read_Data processes a task as an entire line defined by carriage returns (default False)
     """
-    print('reader thread started')
+    # print('reader thread started')
     serial_port.timeout = 1
     while not stopped.is_set(): 
         fio2_data = ''       
@@ -41,7 +41,7 @@ def Read_Data(queue, serial_port, stopped, read_line_mode=False):
                 print('cannot decode with utf-8')
             if not isinstance(fio2_data, bytes):
                 queue.put(fio2_data)
-    print('reader thread finished')
+    # print('reader thread finished')
 
 
 class modem_serial:
@@ -104,7 +104,7 @@ class modem_serial:
                 break
         while not self.stopped.is_set():
             try:
-                list_fifo.append(self.queue.get(block=True, timeout=0.5))
+                list_fifo.append(self.queue.get(block=True, timeout=0.001))
                 #list_fifo.append(self.queue.get_nowait())
             except:
                 break
@@ -117,14 +117,14 @@ class modem_serial:
 
     def init_modem(self):
         self.send_serial_cmd('\r\n')
-        self.get_data_from_queue('\r\n')
+        self.get_data_from_queue('\r\n',wait_to_start_max=0.25)
         self.send_serial_cmd('AT\r\n')
-        ex_found, reply = self.get_data_from_queue(['OK\r\n'])
+        ex_found, reply = self.get_data_from_queue(['OK\r\n'],wait_to_start_max=0.50)
         if ex_found > 0:
             return True
         else:
             self.send_serial_cmd('\r\n')
-            self.get_data_from_queue('\r\n')
+            self.get_data_from_queue('\r\n',wait_to_start_max=0.25)
             self.send_serial_cmd('+++', True)
             ex_found, reply = self.get_data_from_queue(['OK\r\n', '] OK\r\n'])
             if ex_found > 0:
@@ -158,7 +158,7 @@ class modem_serial:
     def reboot_radio(self):
         self.send_serial_cmd('ATZ\r\n')
         ex_found, response = self.get_data_from_queue('\r\n')
-        sleep(3)     #For processor loading of 1.75 seconds (sleep orignialy 0.05) #NOTE the modem appears to take more time when sending data in op mode after atz
+        sleep(1)     #For processor loading of 1.75 seconds (sleep orignialy 0.05) #NOTE the modem appears to take more time when sending data in op mode after atz
         if ex_found <= 0:
             return False
         else: 

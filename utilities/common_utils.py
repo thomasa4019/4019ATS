@@ -15,7 +15,7 @@ class NotEnoughRadioError(Exception):
 
 
 def close_all_serial(serial_port_list):
-    print('shutting down serial ports')
+    # print('shutting down serial ports')
     for i , com in enumerate(serial_port_list):
         serial_port_list[i].close()
     print('serial ports shutdown')
@@ -69,7 +69,7 @@ def disconect_reconnect_radios(current_baud, config_path, json_section='disconne
                 connected.append(element.device)
     if(len(connected) != 2):
         print( " ERROR: NOT ALL COM Ports Found in fixture config " + fixture_path + ' Please ensure settings match your fixtue')
-    print(connected)
+    # print(connected)
     for i in range(len(connected)):
         try:
             print('attempting to attach radio at 57600 located at {}'.format(connected[i]))
@@ -78,7 +78,7 @@ def disconect_reconnect_radios(current_baud, config_path, json_section='disconne
                 timeout=3, rtscts=True) 
             radio = modem_rfd.modem_serial(serial_port_tmp)
             serial_port_tmp.baudrate = 57600
-            print('check that radio can be talked to at 57600')
+            # print('check that radio can be talked to at 57600')
             if radio.init_modem() == True:
                 serial_port_list.append(serial_port_tmp)
                 radio.multithread_read_shutdown()
@@ -86,7 +86,7 @@ def disconect_reconnect_radios(current_baud, config_path, json_section='disconne
                 for j in range(len(baud_rates)):
                     print('attempting to attach radio at {}'.format(baud_rates[j]))
                     serial_port_tmp.baudrate = baud_rates[j]
-                    print('check that radio can be talked to at {}'.format(baud_rates[j]))
+                    # print('check that radio can be talked to at {}'.format(baud_rates[j]))
                     if radio.init_modem() == True:
                         serial_port_list.append(serial_port_tmp)
                         radio.multithread_read_shutdown()
@@ -96,7 +96,7 @@ def disconect_reconnect_radios(current_baud, config_path, json_section='disconne
             print('{} is already in use'.format(connected[i]))
     if len(serial_port_list) < 1:
         raise NotEnoughRadioError('Please connect radio(s), or try power cycling radio(s)')
-    print(serial_port_list)
+    # print(serial_port_list)
     return serial_port_list
     
 

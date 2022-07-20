@@ -76,8 +76,6 @@ class SerialIntf:
 class SBus:                                                                     # tools for handling SBUS data format
   def __init__(self):                                                           # constructor of class
     self.ResetParser()
-    # self.SBUSState = 0
-    # self.SBUSSize = 0
     self.SBUSBuffer = bitarray(22*8,endian='little')
     self.SBUSFS = False
     self.SBUSRxTime = 0
