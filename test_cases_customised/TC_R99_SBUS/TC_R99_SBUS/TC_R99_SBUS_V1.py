@@ -67,7 +67,7 @@ class SerialIntf:
     self.ser.write(data)
   def start(self,Port):                                                         # start the serial read
     global RxQ                                                                  # global q of data
-    self.ser = serial.Serial(port=Port,baudrate=100000,parity=serial.PARITY_EVEN,stopbits=serial.STOPBITS_TWO,timeout=0.1,rtscts=False)
+    self.ser = serial.Serial(port=Port,baudrate=921600,parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE,timeout=0.1,rtscts=False)
     self.SerRead = ReadSerial()                                                 # create an object to read messages
     self.SerThread = threading.Thread(target=self.SerRead.start, args=(self.ser, ),daemon=True)# create a thread to read messages
     self.SerThread.start()                                                           # start a thread to read messages
@@ -79,7 +79,8 @@ class SBus:                                                                     
     self.SBUSBuffer = bitarray(22*8,endian='little')
     self.SBUSFS = False
     self.SBUSRxTime = 0
-  def Send(self,SerInt,ChValues):                                                # write array of values to SBUS up to 16 values
+  #end
+  def Send(self,SerInt,ChValues,SBUS_RC = 0, Out_In = 0):                                                                    # write same value to all sbus channels
     ArrSize = 25
     ArrLen = ArrSize*8
     Endian = 'little'
@@ -88,9 +89,14 @@ class SBus:                                                                     
     bitpos=0
     self.SBUSData[bitpos:bitpos+8:1] = int2ba(0x0f,8,endian=Endian)
     bitpos += 8
-    for i in range(min(16,len(ChValues))):
-      self.SBUSData[bitpos:bitpos+11:1] =  int2ba(ChValues[i],11,endian=Endian)
+    for i in range(16):
+      val  = 0 if i >= len(ChValues) else ChValues[i]
+      self.SBUSData[bitpos:bitpos+11:1] =  int2ba(val,11,endian=Endian)
       bitpos += 11
+    Flags=0
+    Flags = Flags|0x01 if Out_In else Flags                                     # set ch17 if input
+    Flags = Flags|0x02 if SBUS_RC else Flags                                    # set ch18 if RC(PPM)
+    self.SBUSData[bitpos:bitpos+8:1] =  int2ba(Flags,8,endian=Endian)
     Data = [0] * ArrSize
     bitpos=0
     for i in range(0,ArrSize):
@@ -181,7 +187,13 @@ def MatchTxQ(txval):
       return(True,time)
   return(False,0)
 
-def TestSBUS(InpSer,OutSer,SBUS,frames=200,outputInt=0.02):
+def TestSBUS(InpSer,OutSer,SBUS,isRC=False,frames=200,outputInt=0.02):
+  for i in range(3):
+    SBUS.Send(InpSer,[0],SBUS_RC=isRC,Out_In=1)  #set SBUS input
+    sleep(0.1)
+  for i in range(3):
+    SBUS.Send(OutSer,[0],SBUS_RC=isRC,Out_In=0)  #set SBUS output
+    sleep(0.1)
   SentFrames=LatTot=lasttxval=Max=Av=Valid=Order=Rx=0
   LastRxVal=Min=5000
   lastOutput = perf_counter()
@@ -191,7 +203,7 @@ def TestSBUS(InpSer,OutSer,SBUS,frames=200,outputInt=0.02):
     sleep(0.0001)    
     if(perf_counter() - lastOutput >= outputInt):
       lasttxval = NextVal(lasttxval)
-      lastOutput = SBUS.Send(OutSer,[lasttxval])
+      lastOutput = SBUS.Send(OutSer,[lasttxval],SBUS_RC=isRC,Out_In=0)
       PutTxQ(lastOutput,lasttxval)
       SentFrames += 1
     # poll looking for incoming data matching the last output value
@@ -201,7 +213,7 @@ def TestSBUS(InpSer,OutSer,SBUS,frames=200,outputInt=0.02):
       Done = (True if (None == Bytey) else False)
       SData,FS,RxTime = SBUS.Parse(Bytey)
       if(None != SData):
-        #print(SData)
+        # print(SData)
         Rx += 1                                                                 # update total incoming frames          
         Order = (Order+1 if LastRxVal != 5000 and IsOrderBad(SData[0],LastRxVal) else Order)  #updte any disordered frames
         LastRxVal = SData[0]
@@ -237,7 +249,7 @@ def main():
   test_name = []
   for t in Tests:
     SetupSBUS(Radio2,Radio1,t[0],t[1])                                         # the SBUS output is on the GPIO test side
-    Min_Max_Av_Valid_Order_Rx = TestSBUS(SerBUS2,SerBUS1,SBUS)
+    Min_Max_Av_Valid_Order_Rx = TestSBUS(SerBUS2,SerBUS1,SBUS,isRC=False)
     for i in range(len(Min_Max_Av_Valid_Order_Rx)):
       test_name.append('SBUS_'+str(int(t[0]/1000))+'K_'+str(t[1])+'%_'+tests_name[i])
       results.append(Min_Max_Av_Valid_Order_Rx[i])  
