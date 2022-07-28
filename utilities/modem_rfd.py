@@ -106,16 +106,17 @@ class modem_serial:
         start = perf_counter()
         last = None
         while not self.stopped.is_set():
-            if perf_counter()-start > wait_to_start_max: break                          
+            if perf_counter()-start > wait_to_start_max:
+                break                          
             if None != last: 
-                if perf_counter()-last > 0.05: break
+                if perf_counter()-last > 0.05:
+                    break
             try:
                 list_fifo.append(self.queue.get(block=True, timeout=0.005))     # If no character is found after up until timeout, queue.get returns Empty exception to break out of loop  
                 last = perf_counter()
                 return_data = ''.join(list_fifo)
             except:
                 pass
-
         for i, ex_response in enumerate(list_ex_response):
             if (ex_response in return_data):
                 ex_found = (i + 1)
@@ -123,7 +124,7 @@ class modem_serial:
         return ex_found, return_data
 
     def init_modem(self):
-        ex_found, reply = self.retry_command('AT\r\n', 'OK\r\n', 3, wait_to_start_max=0.0)         # Wake up the modem, replaces sending '\r\n'
+        ex_found, reply = self.retry_command('AT\r\n', 'OK\r\n', 1, wait_to_start_max=0.0)         # Wake up the modem, replaces sending '\r\n'
         if ex_found > 0:
             return True
         else:
@@ -209,10 +210,25 @@ class modem_serial:
         if not isinstance(sent_cmd, str) or not isinstance(expected_response, str | list) or not isinstance(numOfRetry, int): raise TypeError
         for attempt in range(numOfRetry):
             self.send_serial_cmd(sent_cmd)
-            ex_found, reply = self.get_data_from_queue(expected_response, wait_to_start_max)
-            # print(f'attempt = {attempt}, ex_found = {ex_found}, reply = {reply}')                                        # For debugging
+            ex_found, reply = self.get_data_from_queue(expected_response)
             if isinstance(expected_response, str): 
                 if ex_found > 0: break
             elif isinstance(expected_response, list):
                 if ex_found == len(expected_response): break
         return ex_found, reply
+
+    def resend_RT_cmd(self, time_between_resend: float = 0.5, total_timeout: float = 16.0):
+        start = perf_counter()
+        while True:
+            self.send_serial_cmd('RT\r\n')
+            ex_found, reply = self.get_data_from_queue('OK\r\n')
+            if perf_counter() - start >= total_timeout:
+                break
+            if ex_found > 0:
+                break
+            sleep(time_between_resend)
+        print('Time:', perf_counter() - start)
+        return ex_found, reply
+
+        # for time() - start > total_timeout:
+        #     pass

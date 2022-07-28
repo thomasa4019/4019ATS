@@ -80,9 +80,9 @@ def disconect_reconnect_radios(current_baud, config_path, json_section='disconne
             radio = modem_rfd.modem_serial(serial_port_tmp)
             serial_port_tmp.baudrate = 57600
             # print('check that radio can be talked to at 57600')
-            start = perf_counter()
+            # start = perf_counter()
             if radio.init_modem() == True:
-                print('Init time:'+str(perf_counter()-start))
+                # print('Init time:'+str(perf_counter()-start))
                 serial_port_list.append(serial_port_tmp)
                 radio.multithread_read_shutdown()
             else:
