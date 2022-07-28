@@ -25,8 +25,8 @@ import datetime
             results.append('FAIL')
 '''
 
-def NETID_test():
-    serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
+def TC3_R9_NETID(reset):
+    serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block(reset=reset)
     
     ################# write test case here #################
     results, ID = ([] for i in range(2))
@@ -37,15 +37,15 @@ def NETID_test():
     radio1 = modem_serial(serial_port_list[0])
     radio2 = modem_serial(serial_port_list[1])
     for i, net_id in enumerate(net_id_list):
-        radio1.set_register('NETID', net_id)   
+        radio1.set_register('NETID', net_id)
         radio2.set_register('NETID', net_id)  
         radio1.reboot_radio()
         radio2.reboot_radio()
         radio1.init_modem()    
         radio2.init_modem()    
-        radio1.send_serial_cmd('RT\r\n')
-        ex_found, reply = radio1.retry_RT_echo(3)
-        if ex_found > 0:
+        ex_found_1, reply_1 = radio1.retry_command('RT\r\n', 'OK\r\n', 3)
+        ex_found_2, reply_2 = radio2.retry_command('RT\r\n', 'OK\r\n', 3)
+        if ex_found_1 > 0 and ex_found_2 > 0:
             results.append('PASS')
         else:
             results.append('FAIL')
@@ -65,7 +65,8 @@ def NETID_test():
     return fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
 def main():
-    NETID_test()
+    results = TC3_R9_NETID(True)
+    print('results = ', results)
 
 if __name__ == '__main__':
     main()

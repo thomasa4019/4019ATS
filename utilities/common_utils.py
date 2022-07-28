@@ -1,5 +1,6 @@
 import sys
 import pathlib
+from time import perf_counter
 parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
 sys.path.insert(1, parent_dir)
 import serial
@@ -8,7 +9,7 @@ import json
 import utilities.modem_rfd as modem_rfd
 import pathlib
 import function_blocks.IS_block_function as fb_is
-
+from time import time,perf_counter
 
 class NotEnoughRadioError(Exception):
     pass
@@ -21,7 +22,7 @@ def close_all_serial(serial_port_list):
     print('serial ports shutdown')
 
 
-def def_read_json(json_section, config_path):
+def def_read_json(json_section: str, config_path: str) -> dict:
     with open(config_path) as json_file:
         data = json.load(json_file)
         dictionary_out = data[json_section]
@@ -79,7 +80,9 @@ def disconect_reconnect_radios(current_baud, config_path, json_section='disconne
             radio = modem_rfd.modem_serial(serial_port_tmp)
             serial_port_tmp.baudrate = 57600
             # print('check that radio can be talked to at 57600')
+            start = perf_counter()
             if radio.init_modem() == True:
+                print('Init time:'+str(perf_counter()-start))
                 serial_port_list.append(serial_port_tmp)
                 radio.multithread_read_shutdown()
             else:

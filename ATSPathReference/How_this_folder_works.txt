@@ -1,0 +1,2 @@
+This folder is a FIXED and must NOT be changed
+This folder is used as a directory path navigator for the entire Auto Test System (ATS) program

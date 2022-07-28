@@ -11,8 +11,6 @@ import datetime
 import os
 from os import walk
 
-
-
 '''When writting a new test case:
 
 -- make sure to add in ID iteratiom for each sub test 
@@ -49,8 +47,8 @@ def main():
     radio2.reboot_radio()
     # radio1.serial_port.baudrate = 460800
     # radio2.serial_port.baudrate = 460800
-    radio1.serial_port.write_timeout = 10 # only send file for 10 sec or less
-    radio1.send_file_serial(file_dir_list[9]) #512k file send for 10 sec or less
+    radio1.serial_port.write_timeout = 60 # only send file for 10 sec or less
+    radio1.send_file_serial(file_dir_list[2]) #512k file send for 10 sec or less
     start_time = time.time()
     ex_found, reply = radio2.get_data_from_queue(['CTL1_TRX', '\r\n'])# read and time all in comming data
     print(reply)

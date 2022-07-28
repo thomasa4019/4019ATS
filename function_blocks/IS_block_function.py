@@ -5,12 +5,13 @@ sys.path.insert(1, parent_dir)
 from utilities import common_utils, modem_rfd
 import time
 
-def IS_block():
+#NOTE: factory_reset=True is added as an argument to IS_block for testing and time purposes
+def IS_block(reset=True):
+    time_start = time.time()
     param_config_path, fixture_config_path = common_utils.get_config_path()
     json_section = 'disconnect_reconnect_data'
     serial_port_list = common_utils.disconect_reconnect_radios(57600, param_config_path, json_section)
-    serial_port_list = common_utils.factory_reset_all_radios(serial_port_list, param_config_path)
-    time_start = time.time()
+    if reset: serial_port_list = common_utils.factory_reset_all_radios(serial_port_list, param_config_path)
     #common_utils.generate_lookup_data(serial_port_list)
     return serial_port_list, param_config_path, time_start, fixture_config_path
 

@@ -25,8 +25,8 @@ import datetime
             results.append('FAIL')
 '''
 
-def AIRSPEED_test():
-    serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
+def TC2_R9_AIRSPEED(reset=True):
+    serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block(reset)
 
     ################# write test case here #################
     results, ID = ([] for i in range(2))
@@ -36,19 +36,17 @@ def AIRSPEED_test():
     air_rate_list = standard_params_dict.get('AIR_SPEED')   #NOTE maybe move into IS block
     radio1 = modem_serial(serial_port_list[0])
     radio2 = modem_serial(serial_port_list[1])
-    for i, air_rate in enumerate(air_rate_list):
-        radio1.set_register('AIR_SPEED', air_speed_param_list[i])   
-        radio2.set_register('AIR_SPEED', air_speed_param_list[i])  
+    for air_rate in air_rate_list:
+        value = int(air_rate/1000)
+        radio1.set_register('AIR_SPEED', value)
+        radio2.set_register('AIR_SPEED', value)
         radio1.reboot_radio()
         radio2.reboot_radio()
         radio1.init_modem()
         radio2.init_modem()
-        radio1.send_serial_cmd('RT\r\n')
-        ex_found, reply = radio1.get_data_from_queue(['OK\r\n'])    
-        if ex_found <= 0:
-            results.append('FAIL')
-        else:
-            results.append('PASS')
+        ex_found, reply = radio1.retry_command('RT\r\n', 'OK\r\n', 5)
+        print(f'air speed {value}', ex_found, reply)
+        results.append('PASS') if ex_found > 0 else results.append('FAIL')
         ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))   
     radio1.multithread_read_shutdown()
     radio2.multithread_read_shutdown()
@@ -65,7 +63,7 @@ def AIRSPEED_test():
     return fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
 def main():
-    AIRSPEED_test()
+    TC2_R9_AIRSPEED(reset=True)
 
 if __name__ == '__main__':
     main()

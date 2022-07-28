@@ -27,7 +27,7 @@ import datetime
             results.append('FAIL')
 '''
 
-def UART_test():
+def TC1_R9_UART():
     serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
     results, ID = ([] for i in range(2)) # results and id pre defined
 
@@ -63,7 +63,7 @@ def UART_test():
     return fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
 def main():
-    UART_test()
+    TC1_R9_UART()
 
 if __name__ == '__main__':
     main()

@@ -41,14 +41,17 @@ def get_random_hex_key(encryption_level):
         key = hex(secrets.randbits(256))[2:]
     else:
         return 0
-    while len(key) < 32*encryption_level:
+    while len(key) < 32*encryption_level:   # incase the secrets module return key with less than 32 digits in length (due to leading zeros), add '0' at the end of the hex string to make it 32-digit length
         key+='0'
     return key
 
-def ENCRYPTION_LEVEL_test():
-    serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
+# TODO: rework this test case with retry function (due to link time)
+def TC15_R9_ENCRYPTION_LEVEL(reset=True):
+    serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block(reset)
 
     ################# write test case here #################
+    wait_to_start_max = 0.5
+
     randomHexKey = [0, get_random_hex_key(1), get_random_hex_key(2)]
     results, ID, name, param = ([] for i in range(4))
     modem_params_dict = common_utils.def_read_json('Modem_Params', main_config_path)
@@ -71,8 +74,8 @@ def ENCRYPTION_LEVEL_test():
         radio2.reboot_radio()
         radio1.init_modem()
         radio2.init_modem()
-        ex_found_1, reply_1 = radio1.retry_RT_echo(3)      # same length - same key: ex_found_1 = 1
-        results.append('PASS') if ex_found_1>0 else results.append('FAIL')
+        ex_found_1, reply_1 = radio1.retry_command('RT\r\n', 'OK\r\n', 3, wait_to_start_max)      # same length - same key: ex_found_1 = 1
+        results.append('PASS') if ex_found_1 > 0 else results.append('FAIL')
         name.append('ENCRYPTION: same level - same key')
         param.append(level)
         ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
@@ -82,11 +85,13 @@ def ENCRYPTION_LEVEL_test():
         radio2.get_data_from_queue(['AT&W\r\n','OK\r\n'])
         radio2.reboot_radio()
         radio2.init_modem()
-        ex_found_2, reply_2 = radio1.retry_RT_echo(3)      # same length - diff. key: ex_found_2 = 0
+        ex_found_2, reply_2 = radio1.retry_command('RT\r\n', 'OK\r\n', 3, wait_to_start_max)      # same length - diff. key: ex_found_2 = 0
         results.append('PASS') if ex_found_2==0 else results.append('FAIL')
         name.append('ENCRYPTION: same level - different key')
         param.append(level)
         ID.append(datetime.datetime.now().strftime('%d/%m-%H:%M:%S'))
+        print(ex_found_1, ex_found_2)
+        print('rep1:' + reply_1,'rep2:'+reply_2)
 
     radio1.set_register('ENCRYPTION_LEVEL', 1)
     radio1.send_serial_cmd('AT&E={}\r\n'.format(randomHexKey[1])) 
@@ -94,8 +99,7 @@ def ENCRYPTION_LEVEL_test():
     radio1.get_data_from_queue(['AT&W\r\n','OK\r\n'])
     radio1.reboot_radio()
     radio1.init_modem()
-    radio1.send_serial_cmd('RT\r\n')
-    ex_found_3, reply_3 = radio1.get_data_from_queue('OK\r\n')      # diff. length - diff. key: ex_found_3 = 0
+    ex_found_3, reply_3 = radio1.retry_command('RT\r\n', 'OK\r\n', 3, wait_to_start_max)      # diff. length - diff. key: ex_found_3 = 0
     results.append('PASS') if ex_found_3==0 else results.append('FAIL')
     name.append('ENCRYPTION: diff. level - diff. key')
     param.append([1, 2])
@@ -114,7 +118,7 @@ def ENCRYPTION_LEVEL_test():
     return fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
 def main():
-    ENCRYPTION_LEVEL_test()
+    TC15_R9_ENCRYPTION_LEVEL()
 
 if __name__ == '__main__':
     main()

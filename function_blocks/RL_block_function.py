@@ -11,7 +11,7 @@ def total_runtime(time_start):
     time_end = time.time() 
     print('TOTAL RUNTIME: {}'.format(time_end - time_start))
 
-def print_to_console(modem_data_list, transpose=False, printToConsole=True):
+def print_to_console(modem_data_list: list, transpose: bool = False, printToConsole: bool = True) -> list:
     '''
     Print result table to console
     Arguments:
@@ -32,7 +32,8 @@ def print_to_console(modem_data_list, transpose=False, printToConsole=True):
             => where ID, name, num, param, results are all 1D list with the same length. These represents columns.
         
         transpose:          -- ==True (if modem_data_list option 2 is used) to transpose the modem_data_list matrix
-    
+        printToConsole:     -- ==False to return table data only and NOT print table to console
+
     Output: Example table
         Test case summary:
         +----------------+-------------------+-----------+------------------+----------+
@@ -76,6 +77,14 @@ def print_to_console(modem_data_list, transpose=False, printToConsole=True):
         np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning) 
         modem_data_list_temp = np.transpose(modem_data_list_temp)
 
+    # The code below raises an error if there is a mismatch in the number of elements in each row/columns
+    Min = Max = len(modem_data_list_temp[0])
+    for i in range(len(modem_data_list_temp)):
+        Max = max(len(modem_data_list_temp[i]), Max)
+        Min = min(len(modem_data_list_temp[i]), Min)
+        if (Max != Min):
+            raise Exception('Error: Mismatch in number of elements in columns/rows')
+            
     # Create table
     try:
         for i in range(len(modem_data_list_temp)):
@@ -83,13 +92,21 @@ def print_to_console(modem_data_list, transpose=False, printToConsole=True):
     except:
         print('ERROR: modem_data_list not in correct format')
         return
+
+    # Print table with pre-defined headers to console
     headers = ['ID', 'Reg name', 'Reg num', 'Param', 'Result']
     if printToConsole:
-        print('\r\nTest case summary:')
+        print ('\r\nTest case summary:')
         print(tabulate(table, headers, tablefmt="grid"))
-    return table
 
-def RL_block(modem_data_list, time_start, transpose=False, printToConsole=True):
+    # Convert from array to list
+    table_list = [[] for i in range(len(table))]
+    for i, value in enumerate(table):
+        table_list[i] = list(value)
+
+    return table_list
+
+def RL_block(modem_data_list: list, time_start: float, transpose: bool = False, printToConsole: bool = True) -> list:
     table = print_to_console(modem_data_list, transpose, printToConsole)
     total_runtime(time_start)
     return table

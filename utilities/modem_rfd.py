@@ -1,18 +1,19 @@
+from asyncio import QueueEmpty
+from queue import Queue
 import sys
 import pathlib
+from cv2 import bilateralFilter
 parent_dir = r'{}'.format([p for p in pathlib.Path(__file__).parents if pathlib.Path(str(p)+'\ATSPathReference').exists()][0])
 sys.path.insert(1, parent_dir)
 import serial
 import serial.tools.list_ports
-from time import sleep, time
+from time import perf_counter, sleep, time
 import threading, multiprocessing
 import utilities.common_utils as common_utils
 import os
-import function_blocks.IS_block_function as fb_is
 
 
-
-def Read_Data(queue, serial_port, stopped, read_line_mode=False):
+def Read_Data(queue: Queue, serial_port, stopped, read_line_mode=False):
     """Reader thread that contunously updates when there is a char or line of char depending on the Mode
 
     Keyword arguments:
@@ -58,7 +59,7 @@ class modem_serial:
         self.queue = multiprocessing.Queue(2049000)                                                                           #set queue size to 10Kb
         self.stopped = threading.Event()                                                                                    #create threading event for reader thread excetion
         self.p1 = threading.Thread(target=Read_Data, args=(self.queue, serial_port, self.stopped, self.read_line_mode))     #instantiate contiunously updating fifo on a seperate thread
-        self.p1.start()   
+        self.p1.start()
         
     def send_file_serial(self, file_dir):
         try:
@@ -69,14 +70,19 @@ class modem_serial:
         except serial.SerialTimeoutException: 
             print('file send stopped')
             pass
-                                                                                   #start the thread
+        #start the thread
 
     #TODO add in wait to send for ATZ case change radio reboot processor loading delay
     def send_serial_cmd(self, message_data, at_mode=False):
+        # try:                                        # WIP: dont use
+        #     while not self.queue.empty():
+        #         self.queue.get_nowait()
+        # except: pass
+
         if at_mode == True:
             try:
                 if len(message_data) >= 1:
-                    sleep(1.2) # manditory 1.3 sec delay before and after +++ 
+                    sleep(1.2)                      # manditory 1.3 sec delay before and after +++ 
                     self.serial_port.write(message_data.encode('utf-8'))
                     sleep(1.2)
                     self.serial_port.write('\r\n'.encode('utf-8'))
@@ -85,30 +91,31 @@ class modem_serial:
         if at_mode == False:
             try:
                 if len(message_data) >= 1:
-                    sleep(0.05) # to avoid writting multiple commands too quick to modem
+                    sleep(0.05)                     # to avoid writting multiple commands too quick to modem
                     self.serial_port.write(message_data.encode('utf-8'))
             except serial.SerialTimeoutException: 
                 print('serial port time out! Error')
     
-    def get_data_from_queue(self, list_ex_response, wait_to_start_max=1):
+    def get_data_from_queue(self, list_ex_response: str | list, wait_to_start_max: float = 0.3):
         return_data = ''
         ex_found = 0
         list_fifo = []
         if isinstance(list_ex_response, str):
             list_ex_response = [list_ex_response]
-        stop = time() + wait_to_start_max
+
+        start = perf_counter()
+        last = None
         while not self.stopped.is_set():
-            if not self.queue.empty():
-                break
-            if time() >= stop:
-                break
-        while not self.stopped.is_set():
+            if perf_counter()-start > wait_to_start_max: break                          
+            if None != last: 
+                if perf_counter()-last > 0.05: break
             try:
-                list_fifo.append(self.queue.get(block=True, timeout=0.001))
-                #list_fifo.append(self.queue.get_nowait())
+                list_fifo.append(self.queue.get(block=True, timeout=0.005))     # If no character is found after up until timeout, queue.get returns Empty exception to break out of loop  
+                last = perf_counter()
+                return_data = ''.join(list_fifo)
             except:
-                break
-            return_data = ''.join(list_fifo)
+                pass
+
         for i, ex_response in enumerate(list_ex_response):
             if (ex_response in return_data):
                 ex_found = (i + 1)
@@ -116,15 +123,10 @@ class modem_serial:
         return ex_found, return_data
 
     def init_modem(self):
-        self.send_serial_cmd('\r\n')
-        self.get_data_from_queue('\r\n',wait_to_start_max=0.25)
-        self.send_serial_cmd('AT\r\n')
-        ex_found, reply = self.get_data_from_queue(['OK\r\n'],wait_to_start_max=0.50)
+        ex_found, reply = self.retry_command('AT\r\n', 'OK\r\n', 3, wait_to_start_max=0.0)         # Wake up the modem, replaces sending '\r\n'
         if ex_found > 0:
             return True
         else:
-            self.send_serial_cmd('\r\n')
-            self.get_data_from_queue('\r\n',wait_to_start_max=0.25)
             self.send_serial_cmd('+++', True)
             ex_found, reply = self.get_data_from_queue(['OK\r\n', '] OK\r\n'])
             if ex_found > 0:
@@ -182,29 +184,35 @@ class modem_serial:
         located in 'common_utils.py'
     '''
     def customised_reset(self):
-        param_config_path, fixture_config_path = common_utils.get_config_path()
-        customised_config_dict = common_utils.def_read_json('Customised_Factory_Reset', param_config_path)
-        for i, value in enumerate(customised_config_dict):
-            self.set_register(value, customised_config_dict[value][0])
+        customised_config_dict = common_utils.def_read_json('Customised_Factory_Reset', common_utils.get_config_path()[0])
+        for key in customised_config_dict:
+            self.set_register(key, customised_config_dict[key][0])
 
 
     def power_cycle_radio():
         pass
     
-    '''
+    def retry_command(self, sent_cmd: str, expected_response: str | list, numOfRetry: int = 3, wait_to_start_max: float = 0.3) -> (int | str):
+        # TODO: rewrite function description
+        '''
         This function is used as a replacement to 'send_serial_cmd()' & 'get_data_from_queue()' in test cases as a way to reattempt
         to get an 'OK\r\n' response from sending 'RT\r\n'
-        This function is useful when 'RT' cmd does not return a response in the 1st attempt for some reasons.
+        This function is useful when 'RT\r\n' cmd does not return an expected response in the 1st attempt for some reasons.
         Input:
-            + numOfRetry: number of attempts to send 'RT\r\n' and receive a response
+            + sent_cmd: command sent by the modem (e.g: 'RT\r\n')
+            + expected_response: expected response from the send_cmd (e.g: ['RT\r\n', 'OK\r\n'])
+            + numOfRetry: number of attempts to retry sent_cmd in case expected_response is not found
         Output -- 2 values in order below:
-            + ex_found: either 1 or 0. 1 means 'OK\r\n' is received & 0 means 'OK\r\n' is not received
-            + reply: actual string being received from the remote modem after an 'RT\r\n' has been sent from the local modem
-    '''
-    def retry_RT_echo(self, numOfRetry):
-        for retry in range(numOfRetry):                      # If no response found from sending 'RT', retry up to 3 times  
-            self.send_serial_cmd('RT\r\n')
-            ex_found, reply = self.get_data_from_queue('OK\r\n')
-            if ex_found > 0:
-                break
+            + ex_found: number of strings in the expected_response received by the modem
+            + reply: actual string/data received by the modem
+        '''
+        if not isinstance(sent_cmd, str) or not isinstance(expected_response, str | list) or not isinstance(numOfRetry, int): raise TypeError
+        for attempt in range(numOfRetry):
+            self.send_serial_cmd(sent_cmd)
+            ex_found, reply = self.get_data_from_queue(expected_response, wait_to_start_max)
+            # print(f'attempt = {attempt}, ex_found = {ex_found}, reply = {reply}')                                        # For debugging
+            if isinstance(expected_response, str): 
+                if ex_found > 0: break
+            elif isinstance(expected_response, list):
+                if ex_found == len(expected_response): break
         return ex_found, reply

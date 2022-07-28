@@ -1,0 +1,167 @@
+{
+    "AIR_SPEED 9000": {
+        "Reg name": "AIR_SPEED",
+        "Reg num": "2",
+        "Param": "10000",
+        "MinMax": "PASS"
+    },
+    "AIR_SPEED 12000": {
+        "Reg name": "AIR_SPEED",
+        "Reg num": "2",
+        "Param": "12000",
+        "MinMax": "PASS"
+    },
+    "AIR_SPEED 56000": {
+        "Reg name": "AIR_SPEED",
+        "Reg num": "2",
+        "Param": "56000",
+        "MinMax": "PASS"
+    },
+    "AIR_SPEED 64000": {
+        "Reg name": "AIR_SPEED",
+        "Reg num": "2",
+        "Param": "64000",
+        "MinMax": "PASS"
+    },
+    "NETID 30": {
+        "Reg name": "NETID",
+        "Reg num": "3",
+        "Param": "30",
+        "MinMax": "PASS"
+    },
+    "NETID 255": {
+        "Reg name": "NETID",
+        "Reg num": "3",
+        "Param": "255",
+        "MinMax": "PASS"
+    },
+    "MIN_MAX_FREQ: Lowband 23ch [915000, 921000]": {
+        "Reg name": "MIN_MAX_FREQ: Lowband 23ch",
+        "Reg num": [
+            8,
+            9
+        ],
+        "Param": [
+            915000,
+            921000
+        ],
+        "MinMax": "PASS"
+    },
+    "MIN_MAX_FREQ: Lowband 51ch [902000, 915000]": {
+        "Reg name": "MIN_MAX_FREQ: Lowband 51ch",
+        "Reg num": [
+            8,
+            9
+        ],
+        "Param": [
+            902000,
+            915000
+        ],
+        "MinMax": "PASS"
+    },
+    "MIN_MAX_FREQ: Highband 23ch [922000, 928000]": {
+        "Reg name": "MIN_MAX_FREQ: Highband 23ch",
+        "Reg num": [
+            8,
+            9
+        ],
+        "Param": [
+            922000,
+            928000
+        ],
+        "MinMax": "PASS"
+    },
+    "MIN_MAX_FREQ: Highband 51ch [915000, 928000]": {
+        "Reg name": "MIN_MAX_FREQ: Highband 51ch",
+        "Reg num": [
+            8,
+            9
+        ],
+        "Param": [
+            915000,
+            928000
+        ],
+        "MinMax": "PASS"
+    },
+    "MIN_MAX_FREQ: Wholeband 23ch [915000, 928000]": {
+        "Reg name": "MIN_MAX_FREQ: Wholeband 23ch",
+        "Reg num": [
+            8,
+            9
+        ],
+        "Param": [
+            915000,
+            928000
+        ],
+        "MinMax": "PASS"
+    },
+    "MIN_MAX_FREQ: Wholeband 51ch [902000, 928000]": {
+        "Reg name": "MIN_MAX_FREQ: Wholeband 51ch",
+        "Reg num": [
+            8,
+            9
+        ],
+        "Param": [
+            902000,
+            928000
+        ],
+        "MinMax": "PASS"
+    },
+    "MIN_MAX_FREQ: Single channel low [902000, 902250]": {
+        "Reg name": "MIN_MAX_FREQ: Single channel low",
+        "Reg num": [
+            8,
+            9
+        ],
+        "Param": [
+            902000,
+            902250
+        ],
+        "MinMax": "PASS"
+    },
+    "MIN_MAX_FREQ: Single channel high [927750, 928000]": {
+        "Reg name": "MIN_MAX_FREQ: Single channel high",
+        "Reg num": [
+            8,
+            9
+        ],
+        "Param": [
+            927750,
+            928000
+        ],
+        "MinMax": "PASS"
+    },
+    "ENCRYPTION: same level - same key 1": {
+        "Reg name": "ENCRYPTION: same level - same key",
+        "Reg num": 15,
+        "Param": 1,
+        "MinMax": "PASS"
+    },
+    "ENCRYPTION: same level - different key 1": {
+        "Reg name": "ENCRYPTION: same level - different key",
+        "Reg num": 15,
+        "Param": 1,
+        "MinMax": "PASS"
+    },
+    "ENCRYPTION: same level - same key 2": {
+        "Reg name": "ENCRYPTION: same level - same key",
+        "Reg num": 15,
+        "Param": 2,
+        "MinMax": "PASS"
+    },
+    "ENCRYPTION: same level - different key 2": {
+        "Reg name": "ENCRYPTION: same level - different key",
+        "Reg num": 15,
+        "Param": 2,
+        "MinMax": "PASS"
+    },
+    "ENCRYPTION: diff. level - diff. key [1, 2]": {
+        "Reg name": "ENCRYPTION: diff. level - diff. key",
+        "Reg num": 15,
+        "Param": [
+            1,
+            2
+        ],
+        "MinMax": "PASS"
+    }
+}

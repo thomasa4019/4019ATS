@@ -27,7 +27,7 @@ import datetime
             results.append('FAIL')
 '''
 
-def NUM_CHANNELS_test():
+def TC10_R9_NUM_CHANNELS():
     serial_port_list, main_config_path, time_start, fixture_cfg_path = fb_is.IS_block()
     results, ID = ([] for i in range(2)) # results and id pre defined
 
@@ -67,7 +67,7 @@ def NUM_CHANNELS_test():
     return fb_rl.RL_block(modem_data_list, time_start, transpose=True)
 
 def main():
-    NUM_CHANNELS_test()
+    TC10_R9_NUM_CHANNELS()
 
 if __name__ == '__main__':
     main()
